@@ -78,6 +78,9 @@ class Messengers_division:
                 f"\nEnsure to add messengers before compiling"
             )
             raise ValueError(error_str)
+        if messages_per_second <= 0:
+            error_str = f"Can't use negative values"
+            raise ValueError(error_str)
         new_messenger_to_reply = _Messenger(
             trigger=trigger,
             reply_func=reply_func,
