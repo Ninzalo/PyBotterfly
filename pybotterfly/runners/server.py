@@ -4,17 +4,17 @@ import pickle
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.converters import dataclass_from_dict
 from pybotterfly.bot.returns.message import Return
-from pybotterfly.bot.struct import Message_struct
-from pybotterfly.bot.reply.reply_division import Messengers_division
-from pybotterfly.message_handler.message_handler import Message_handler
+from pybotterfly.bot.struct import MessageStruct
+from pybotterfly.bot.reply.reply_division import MessengersDivision
+from pybotterfly.message_handler.message_handler import MessageHandler
 
 
 class Server:
     def __init__(
         self,
-        messengers: Messengers_division,
+        messengers: MessengersDivision,
         message_reply_rate: int | float,
-        message_handler: Message_handler,
+        message_handler: MessageHandler,
         base_config: BaseConfig,
     ) -> None:
         self._messengers = messengers
@@ -43,7 +43,7 @@ class Server:
                 break
             message = pickle.loads(data)
             message_cls = dataclass_from_dict(
-                struct=Message_struct, dictionary=message
+                struct=MessageStruct, dictionary=message
             )
             addr = writer.get_extra_info("peername")
             print(f"Received {message_cls!r} from {addr!r}")
@@ -105,9 +105,9 @@ class Server:
 
 
 def run_server(
-    messengers: Messengers_division,
+    messengers: MessengersDivision,
     message_reply_rate: int | float,
-    message_handler: Message_handler,
+    message_handler: MessageHandler,
     local_ip: str,
     local_port: int,
     base_config: BaseConfig = BaseConfig,

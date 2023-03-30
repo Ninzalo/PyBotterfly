@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Coroutine, List
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
-from pybotterfly.bot.struct import Message_struct
+from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.transitions.payloads import Payloads
 
 
@@ -48,7 +48,7 @@ class Transitions:
 
     def __post_init__(self):
         if self.config.DEBUG_STATE:
-            if self.payloads == None:
+            if self.payloads is None:
                 print(f"Payloads aren't added")
 
     def add_transition(
@@ -78,12 +78,13 @@ class Transitions:
                 "Please, compile after adding all of the transitions"
             )
         if new_transition in self.transitions:
-            raise ValueError("Transition already exists")
+            error_str = f"Transition already exists: {new_transition}"
+            raise ValueError(error_str)
 
         if self._counter_unique(trigger=trigger, src=src, dst=dst) > 0:
             raise ValueError("Transition already realized by other trigger")
 
-        if new_transition.trigger == None:
+        if new_transition.trigger is None:
             if self._counter_none(src=src) > 0:
                 raise ValueError("Multiple 'else' blocks aren't supported")
             self.transitions.append(new_transition)
@@ -110,7 +111,7 @@ class Transitions:
         """
         Compiles the transitions and performs various checks to ensure the
         validity of the transitions. This method should be called only after
-        adding all of the transitions.
+        adding all the transitions.
 
         :raises ValueError: If the transitions have already been compiled.
 
@@ -128,7 +129,7 @@ class Transitions:
         user_messenger_id: int,
         user_messenger: BaseConfig.ADDED_MESSENGERS,
         user_stage: str,
-        message: Message_struct,
+        message: MessageStruct,
     ) -> Returns:
         """
         Runs the state machine with the given input message, and returns the
@@ -156,9 +157,9 @@ class Transitions:
                 "Transitions not compiled. "
                 f"\nEnsure to compile transitions to run"
             )
-        if message.text != None and message.payload != None:
+        if message.text is not None and message.payload is not None:
             message.text = None
-        if message.text != None:
+        if message.text is not None:
             message.text = replace_emoji(message.text, replace="")
             stage_transitions = await self._get_transitions_by_stage(
                 stage=user_stage
@@ -176,8 +177,8 @@ class Transitions:
                 user_messenger_id, user_messenger
             )
             return answer
-        elif message.payload != None:
-            if self.payloads != None:
+        elif message.payload is not None:
+            if self.payloads is not None:
                 output = await self.payloads.run(entry_dict=message.payload)
                 if (
                     user_stage == output.get("src")
@@ -212,7 +213,7 @@ class Transitions:
     def _counter_none(self, src: str) -> int:
         amount = 0
         for transition in self.transitions:
-            if transition.trigger == None and transition.from_stage == src:
+            if transition.trigger is None and transition.from_stage == src:
                 amount += 1
         return amount
 
@@ -230,11 +231,11 @@ class Transitions:
                         amount += 1
         return amount
 
-    def _get_all_source_stages(self) -> List[Transition]:
+    def _get_all_source_stages(self) -> List[Transition.to_stage]:
         list_of_transitions = list(
             set([transition.from_stage for transition in self.transitions])
         )
-        if self.payloads != None:
+        if self.payloads is not None:
             for payload in self.payloads.payloads:
                 list_of_transitions.append(payload.src)
             list_of_transitions = list(set(list_of_transitions))
@@ -252,19 +253,19 @@ class Transitions:
 
     def _check_none_transition_by_stage(self, stage: str) -> bool:
         for transition in self.transitions:
-            if transition.trigger == None and transition.from_stage == stage:
+            if transition.trigger is None and transition.from_stage == stage:
                 return True
         return False
 
     def _checks(self) -> None:
-        if self.error_return == None:
+        if self.error_return is None:
             raise RuntimeError("Error return wasn't added")
         if len(self.transitions) == 0:
             raise RuntimeError(f"Can't compile while no transitions added")
         for transition in self.transitions:
             self._transition_args_check(func=transition.to_stage)
         self._transition_args_check(func=self.error_return)
-        if self.payloads != None:
+        if self.payloads is not None:
             if not self.payloads._compiled:
                 raise RuntimeError(f"Payloads aren't compiled")
 
@@ -288,5 +289,5 @@ class Transitions:
 
     async def _get_none_transition_by_stage(self, stage: str) -> Transition:
         for transition in self.transitions:
-            if transition.trigger == None and transition.from_stage == stage:
+            if transition.trigger is None and transition.from_stage == stage:
                 return transition

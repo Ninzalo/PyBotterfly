@@ -2,11 +2,11 @@ import inspect
 from typing import Coroutine
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
-from pybotterfly.bot.struct import Message_struct
+from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.transitions.transitions import Transitions
 
 
-class Message_handler:
+class MessageHandler:
     def __init__(
         self,
         user_stage_getter: Coroutine,
@@ -36,7 +36,7 @@ class Message_handler:
             print(f"Added user stage getter: {user_stage_getter}")
         self._checks()
 
-    async def get(self, message_class: Message_struct) -> Returns:
+    async def get(self, message_class: MessageStruct) -> Returns:
         """
         Retrieves a Returns instance by running the Transitions instance
         according to the provided message data and user stage data.

@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.struct import Message_struct
+from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.converters import str_to_dict
 from pybotterfly.server.server_func import send_to_server
 
@@ -9,7 +9,7 @@ from pybotterfly.server.server_func import send_to_server
 from aiogram import types, executor, Dispatcher
 
 
-class Tg_client:
+class TgClient:
     def __init__(
         self,
         dispatcher: Dispatcher,
@@ -29,7 +29,7 @@ class Tg_client:
         self,
         query: types.CallbackQuery,
     ) -> None:
-        message_struct = Message_struct(
+        message_struct = MessageStruct(
             user_id=query.from_user.id,
             messenger="tg",
             payload=str_to_dict(string=query.data),
@@ -41,7 +41,7 @@ class Tg_client:
         )
 
     async def message_handler(self, message: types.Message) -> None:
-        message_struct = Message_struct(
+        message_struct = MessageStruct(
             user_id=message.from_id, messenger="tg", text=message.text
         )
         await send_to_server(
@@ -58,7 +58,7 @@ class Tg_client:
             return
         print(f"Rate test started at {test_start_time}")
         for num in range(1, messages_amount + 1):
-            message_struct = Message_struct(
+            message_struct = MessageStruct(
                 user_id=test_id, messenger="tg", text=f"{num}"
             )
             await send_to_server(
@@ -113,7 +113,7 @@ def start_tg_client(
         client. Defaults to `BaseConfig`.
     :type base_config: BaseConfig
     :return: None
-    :rtype: None
+    :rtype: NoneType
     """
 
     tg_client = _get_tg_client(
@@ -155,7 +155,7 @@ def run_test(
         client. Defaults to `BaseConfig`.
     :type base_config: BaseConfig
     :return: None
-    :rtype: None
+    :rtype: NoneType
     """
 
     tg_client = _get_tg_client(
@@ -172,7 +172,7 @@ def _get_tg_client(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig,
-) -> Tg_client:
+) -> TgClient:
     """
     Returns a new Tg_client instance with the specified configuration options.
 
@@ -195,7 +195,7 @@ def _get_tg_client(
     :returns: A new Tg_client instance with the specified configuration options.
     :rtype: Tg_client
     """
-    return Tg_client(
+    return TgClient(
         dispatcher=dispatcher,
         local_ip=handler_ip,
         local_port=handler_port,

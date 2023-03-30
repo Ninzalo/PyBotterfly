@@ -29,7 +29,7 @@ class _Messenger:
 
 
 @dataclass()
-class Messengers_division:
+class MessengersDivision:
     """
     A class that represents a division of messengers to answer. Contains a
     list of _Messenger objects that correspond to specific messaging
@@ -104,7 +104,7 @@ class Messengers_division:
         registered and before starting the client.
 
         :return: None
-        :rtype: None
+        :rtype: NoneType
         :raises ValueError: If the messengers are already compiled.
         """
 

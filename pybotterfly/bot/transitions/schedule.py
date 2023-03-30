@@ -10,10 +10,10 @@ class ScheduledJob:
     the coroutine that will be scheduled for execution.
 
     :param payload: A dictionary containing parameters for the job.
-    :type payload: dict
+    :type payload: str
     :param dst: A coroutine that will be scheduled for execution.
     :type dst: Coroutine
     """
 
-    payload: dict
+    payload: str
     dst: Coroutine

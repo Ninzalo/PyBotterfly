@@ -3,7 +3,7 @@ from pybotterfly.base_config import BaseConfig
 
 
 @dataclass()
-class Message_struct:
+class MessageStruct:
     """
     A data class representing a message sent by a user.
 

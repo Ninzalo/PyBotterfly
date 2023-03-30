@@ -5,7 +5,7 @@ from pybotterfly.bot.transitions.schedule import ScheduledJob
 
 
 @dataclass()
-class Type_data:
+class TypeData:
     key: str
     value: str
 
@@ -16,7 +16,7 @@ class Payload:
     src: str
     dst: Any
     space_for_data: int
-    type_keys_and_values: List[Type_data] = field(default_factory=list)
+    type_keys_and_values: List[TypeData] = field(default_factory=list)
     data_keys: List[str] = field(default_factory=list)
 
 
@@ -43,10 +43,17 @@ class Payloads:
         Adds a reference payload to the state machine.
         Allows you to add new payload based on existing references
 
-        :param path: The path to the reference in the format `a.b.c`.
+        :param path: The path of the reference in the format like
+            `main_type:main_type_value/type:type_value/id:/messenger:`, where
+            `main_type` is a main type key, `main_type_value` is a main type
+            value, `type` is a subtype key, `type_value` is a type value,
+            `id` and `messenger` are data type (you will get its value in
+            `run` func). You can rename them and add others.
         :type path: str
+
         :param src: The source stage of the reference.
         :type src: str
+
         :param dst: The coroutine to be called after the reference is resolved.
         :type dst: Coroutine
 
@@ -60,7 +67,7 @@ class Payloads:
                 f"\nEnsure to compile after all references added"
             )
             raise RuntimeError(error_str)
-        self._value_type_check(value=[path, src], type=str)
+        self._value_type_check(value=[path, src], type_of_value=str)
         ref_dict = self._parse_path(path=path)
         self._auto_create_payload(ref_dict=ref_dict, src=src, dst=dst)
         if self.config.DEBUG_STATE:
@@ -85,7 +92,7 @@ class Payloads:
                 f"\nEnsure to compile after all payloads added"
             )
             raise RuntimeError(error_str)
-        self._value_type_check(value=[path, src], type=str)
+        self._value_type_check(value=[path, src], type_of_value=str)
         new_payload_dict = self._parse_path(path=path)
         self._add_payload(new_dict=new_payload_dict, src=src, dst=dst)
         if self.config.DEBUG_STATE:
@@ -100,7 +107,7 @@ class Payloads:
         :raises RuntimeError: If an error return has already been added or
             if the state machine has already been compiled.
         """
-        if self.error_return != None:
+        if self.error_return is not None:
             raise RuntimeError(f"Error return already added")
         if self._compiled:
             error_str = (
@@ -117,7 +124,7 @@ class Payloads:
         if self.config.DEBUG_STATE:
             print(f"Added error payload return: {self.error_return}")
 
-    def add_scheduled_job(self, payload: dict, dst: Coroutine):
+    def add_scheduled_job(self, payload: str, dst: Coroutine):
         """
         Adds a new scheduled job to the state machine.
 
@@ -156,7 +163,7 @@ class Payloads:
         if self.payloads == []:
             error_str = f"Failed to compile payloads \nNo payloads added"
             raise RuntimeError(error_str)
-        if self.error_return == None:
+        if self.error_return is None:
             error_str = (
                 f"Failed to compile payloads\nError payload wasn't added"
             )
@@ -183,7 +190,7 @@ class Payloads:
             for w in word:
                 self.add_words_to_shorten(word=w)
             return
-        self._value_type_check(value=word, type=str)
+        self._value_type_check(value=word, type_of_value=str)
         if len(self.payloads) > 0:
             error_str = (
                 "Payloads were already created"
@@ -205,7 +212,7 @@ class Payloads:
         """
         Runs the payload and returns a dictionary containing the payload data,
         the destination and source of the payload.
-        Usecase: If you configured Payloads with 'shorten=True' param,
+        Use-case: If you configured Payloads with 'shorten=True' param,
         you should ensure that 'entry_dict' is pre-shortened
 
         :param entry_dict: A dictionary containing the payload data.
@@ -234,7 +241,7 @@ class Payloads:
         return dict(zip(output_keys_list, output_data_list))
 
     def _shortener(self, value: str) -> str:
-        self._value_type_check(value=value, type=str)
+        self._value_type_check(value=value, type_of_value=str)
         if len(value) == 0:
             error_str = f"Value '{value}' is too short already"
             raise ValueError(error_str)
@@ -243,25 +250,25 @@ class Payloads:
         return value
 
     def _shorten_word_from_shorten_list(self, word: str) -> str:
-        self._value_type_check(value=word, type=str)
+        self._value_type_check(value=word, type_of_value=str)
         if self.shorten:
             for _ in range(len(self.words_to_shorten)):
                 for word_to_shorten in self.words_to_shorten:
                     word = word.replace(word_to_shorten, word_to_shorten[0])
         return word
 
-    def _value_type_check(self, value, type) -> None:
+    def _value_type_check(self, value, type_of_value) -> None:
         if isinstance(value, list):
             for val in value:
-                self._value_type_check(value=val, type=type)
+                self._value_type_check(value=val, type_of_value=type_of_value)
             return
-        if not isinstance(value, type):
+        if not isinstance(value, type_of_value):
             error_str = (
-                f"Value '{value}' has type '{type(value)}' instead of '{type}'"
+                f"Value '{value}' has type '{type(value)}' instead of '{type_of_value}'"
             )
             raise TypeError(error_str)
 
-    def _length(self, data: str) -> int:
+    def _length(self, data: str | dict) -> int:
         data_length = len(str(data).encode())
         if self.use_for == "vk":
             max_length = 255
@@ -278,7 +285,7 @@ class Payloads:
         return data_length
 
     def _parse_path(self, path: str) -> dict:
-        self._value_type_check(value=path, type=str)
+        self._value_type_check(value=path, type_of_value=str)
         return_dict = {}
         added_keys = []
         path = path.strip()
@@ -289,7 +296,7 @@ class Payloads:
                     if self.payloads != []:
                         error_str = (
                             f"Main key '{key}' is wrong. "
-                            f"It shold be '{self.main_type}'"
+                            f"It should be '{self.main_type}'"
                         )
                         raise KeyError(error_str)
                     else:
@@ -309,13 +316,13 @@ class Payloads:
             self._length(return_dict)
         return return_dict
 
-    def _get_type_data_from_dict(self, ref_dict: dict) -> List[Type_data]:
+    def _get_type_data_from_dict(self, ref_dict: dict) -> List[TypeData]:
         self._value_type_check(ref_dict, dict)
         type_data = []
         for key, value in ref_dict.items():
             if key != self.main_type:
                 if isinstance(value, str):
-                    type_data.append(Type_data(key=key, value=value))
+                    type_data.append(TypeData(key=key, value=value))
         return type_data
 
     def _get_data_keys_from_dict(self, ref_dict: dict) -> List[str]:
@@ -341,7 +348,6 @@ class Payloads:
         type_data = self._get_type_data_from_dict(ref_dict=ref_dict)
         data_keys = self._get_data_keys_from_dict(ref_dict=ref_dict)
         space_for_data = self._get_space_for_data(ref_dict=ref_dict)
-        new_payload = None
         for key, value in ref_dict.items():
             key = self._shortener(key)
             if key == self._shortener(self.main_type):
@@ -357,7 +363,7 @@ class Payloads:
                     type_keys_and_values=type_data,
                     data_keys=data_keys,
                 )
-                if not new_payload in self.payloads:
+                if new_payload not in self.payloads:
                     self.payloads.append(new_payload)
 
     def _find_reference(self, main_type_value: str):
@@ -384,12 +390,12 @@ class Payloads:
                     ref_data_keys_list.append(type_keys_and_value.key)
                     ref_data_values_list.append(type_keys_and_value.value)
                 if (
-                    ref_data_keys_list == data_keys_list
-                    and ref_data_values_list == data_values_list
+                        ref_data_keys_list == data_keys_list
+                        and ref_data_values_list == data_values_list
                 ):
                     return payload
 
-        if self.error_return == None:
+        if self.error_return is None:
             error_str = (
                 f"Can't find reference with main type '{main_type_value}' "
                 f"similar to {given_dict}"

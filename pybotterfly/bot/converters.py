@@ -2,7 +2,7 @@ import dataclasses
 import ast
 
 
-def dataclass_from_dict(struct, dictionary) -> dict:
+def dataclass_from_dict(struct, dictionary: dict) -> dict:
     """
     Convert a dictionary to an instance of a dataclass.
 
@@ -16,10 +16,10 @@ def dataclass_from_dict(struct, dictionary) -> dict:
     :rtype: dict
     """
     try:
-        fieldtypes = {f.name: f.type for f in dataclasses.fields(struct)}
+        field_types = {f.name: f.type for f in dataclasses.fields(struct)}
         return struct(
             **{
-                f: dataclass_from_dict(fieldtypes[f], dictionary[f])
+                f: dataclass_from_dict(field_types[f], dictionary[f])
                 for f in dictionary
             }
         )

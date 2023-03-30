@@ -60,7 +60,7 @@ class Returns:
         :type keyboard: Buttons or None
         :param inline_keyboard: An optional inline keyboard to be displayed
             to the user.
-        :type inline_keyboard: Inline_buttons or None
+        :type inline_keyboard: Inline_buttons or NoneType
         :raises: None
         """
         new_return = Return(

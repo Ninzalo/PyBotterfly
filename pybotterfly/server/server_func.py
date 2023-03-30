@@ -1,11 +1,11 @@
 import asyncio
 import pickle
-from pybotterfly.bot.struct import Message_struct
+from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.converters import dataclass_to_dict
 
 
 async def send_to_server(
-    message: Message_struct, local_ip: str, local_port: int
+    message: MessageStruct, local_ip: str, local_port: int
 ) -> None:
     """
     Sends a message to a server at a specified IP address and port.

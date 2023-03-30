@@ -5,16 +5,16 @@ from pybotterfly.base_config import BaseConfig
 
 # Vk async library
 from vkbottle import API
-from vkbottle import Keyboard as vk_kb
-from vkbottle import KeyboardButtonColor as vk_kb_col
-from vkbottle import Text as vk_text
+from vkbottle import Keyboard as VkKeyboard
+from vkbottle import KeyboardButtonColor as VkKeyboardColor
+from vkbottle import Text as VkText
 
 # Tg async library
 from aiogram import Bot
-from aiogram.types import InlineKeyboardMarkup as tg_inline_kb
-from aiogram.types import InlineKeyboardButton as tg_inline_kb_button
-from aiogram.types import ReplyKeyboardMarkup as tg_kb
-from aiogram.types import KeyboardButton as tg_kb_button
+from aiogram.types import InlineKeyboardMarkup as TgInlineKeyboard
+from aiogram.types import InlineKeyboardButton as TgInlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup as TgKeyboard
+from aiogram.types import KeyboardButton as TgKeyboardButton
 
 
 @dataclass()
@@ -48,14 +48,14 @@ class DefaultVkReplier:
             peer_id=return_message.user_messenger_id,
             message=return_message.text,
             random_id=0,
-            keyboard=keyboard.get_json() if keyboard != None else None,
+            keyboard=keyboard.get_json() if keyboard is not None else None,
         )
 
     async def _get_vk_keyboard(
         self,
         keyboard: Optional[Return.keyboard],
         inline_keyboard: Optional[Return.inline_keyboard],
-    ) -> Optional[vk_kb]:
+    ) -> Optional[VkKeyboard]:
         """
         Converts a `Return` object's `keyboard` or `inline_keyboard` attribute
         to a `vk_api.keyboard.VkKeyboard` object.
@@ -69,16 +69,16 @@ class DefaultVkReplier:
         :return: A `vk_api.keyboard.VkKeyboard` object.
         :rtype: Optional[vk_api.keyboard.VkKeyboard]
         """
-        if keyboard == None and inline_keyboard == None:
+        if keyboard is None and inline_keyboard is None:
             return None
         buttons = inline_keyboard or keyboard or []
-        keyboard_cls = vk_kb(one_time=False, inline=bool(inline_keyboard))
+        keyboard_cls = VkKeyboard(one_time=False, inline=bool(inline_keyboard))
         for button in buttons:
             kwargs = {"label": button.label}
             if inline_keyboard:
                 kwargs["payload"] = button.payload
             keyboard_cls.add(
-                vk_text(**kwargs),
+                VkText(**kwargs),
                 await self._vk_color_picker(button.color),
             )
             if button.new_line_after:
@@ -87,7 +87,7 @@ class DefaultVkReplier:
 
     async def _vk_color_picker(
         self, color: config.BUTTONS_COLORS
-    ) -> vk_kb_col:
+    ) -> VkKeyboardColor:
         """
         Converts a button color to a VK Keyboard color.
 
@@ -103,12 +103,12 @@ class DefaultVkReplier:
         :rtype: vk_api.keyboard.VkKeyboardColor
         """
         color_map = {
-            "primary": vk_kb_col.PRIMARY,
-            "secondary": vk_kb_col.SECONDARY,
-            "positive": vk_kb_col.POSITIVE,
-            "negative": vk_kb_col.NEGATIVE,
+            "primary": VkKeyboardColor.PRIMARY,
+            "secondary": VkKeyboardColor.SECONDARY,
+            "positive": VkKeyboardColor.POSITIVE,
+            "negative": VkKeyboardColor.NEGATIVE,
         }
-        return color_map.get(color, vk_kb_col.PRIMARY)
+        return color_map.get(color, VkKeyboardColor.PRIMARY)
 
 
 @dataclass()
@@ -146,14 +146,14 @@ class DefaultTgReplier:
         await self.tg_bot.send_message(
             chat_id=return_message.user_messenger_id,
             text=return_message.text,
-            reply_markup=keyboard if keyboard != None else None,
+            reply_markup=keyboard if keyboard is not None else None,
         )
 
     async def _get_tg_keyboard(
         self,
         keyboard: Optional[Return.keyboard],
         inline_keyboard: Optional[Return.inline_keyboard],
-    ) -> tg_inline_kb | tg_kb | None:
+    ) -> TgInlineKeyboard | TgKeyboard | None:
         """
         Generates a Telegram keyboard object from the provided keyboard
         and inline_keyboard parameters.
@@ -167,13 +167,13 @@ class DefaultTgReplier:
             buttons are given.
         :rtype: tg_inline_kb | tg_kb | None
         """
-        if keyboard == None and inline_keyboard == None:
+        if keyboard is None and inline_keyboard is None:
             return None
         buttons = inline_keyboard or keyboard or []
         keyboard_cls = (
-            tg_inline_kb()
+            TgInlineKeyboard()
             if inline_keyboard is not None
-            else tg_kb(resize_keyboard=True)
+            else TgKeyboard(resize_keyboard=True)
         )
         for button in buttons:
             button_text = (
@@ -182,12 +182,12 @@ class DefaultTgReplier:
             )
             if inline_keyboard is not None:
                 keyboard_cls.add(
-                    tg_inline_kb_button(
+                    TgInlineKeyboardButton(
                         button_text, callback_data=str(button.payload)
                     )
                 )
             else:
-                keyboard_cls.add(tg_kb_button(button_text))
+                keyboard_cls.add(TgKeyboardButton(button_text))
             if button.new_line_after:
                 keyboard_cls.row()
         return keyboard_cls

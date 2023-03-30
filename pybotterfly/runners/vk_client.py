@@ -2,7 +2,7 @@ import json
 import asyncio
 from datetime import datetime
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.struct import Message_struct
+from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.server.server_func import send_to_server
 
 # Vk async library
@@ -10,7 +10,7 @@ from vkbottle import GroupEventType
 from vkbottle.bot import Message, MessageEvent, Bot
 
 
-class Vk_client:
+class VkClient:
     def __init__(
         self,
         handler: Bot,
@@ -31,7 +31,7 @@ class Vk_client:
     async def handle_callback_event(self, event: MessageEvent):
         user_id = int(event.object.user_id)
         payload = event.object.payload
-        message = Message_struct(
+        message = MessageStruct(
             user_id=user_id, messenger="vk", payload=payload
         )
         await send_to_server(
@@ -45,7 +45,7 @@ class Vk_client:
             payload = json.loads(event.payload)
         else:
             payload = None
-        message = Message_struct(
+        message = MessageStruct(
             user_id=int(event.from_id),
             messenger="vk",
             text=event.text,
@@ -74,7 +74,7 @@ class Vk_client:
             return
         print(f"Rate test started at {test_start_time}")
         for num in range(1, messages_amount + 1):
-            message_struct = Message_struct(
+            message_struct = MessageStruct(
                 user_id=test_id, messenger="vk", text=f"{num}"
             )
             await send_to_server(
@@ -116,8 +116,7 @@ def start_vk_client(
         receive incoming messages
     :type handler_port: int
 
-    :param base_config: BaseConfig object containing VK API settings,
-        defaults to BaseConfig
+    :param base_config: BaseConfig object containing VK API settings
     :type base_config: BaseConfig, optional
 
     :return: None
@@ -185,7 +184,7 @@ def _get_vk_client(
     handler_port: int,
     base_config: BaseConfig = BaseConfig,
 ):
-    return Vk_client(
+    return VkClient(
         handler=handler,
         local_ip=handler_ip,
         local_port=handler_port,

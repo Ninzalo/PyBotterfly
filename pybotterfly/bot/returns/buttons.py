@@ -6,11 +6,11 @@ from pybotterfly.base_config import BaseConfig
 @dataclass()
 class _Button:
     def __init__(
-        self,
-        label: str,
-        color: BaseConfig.BUTTONS_COLORS,
-        new_line_after: bool = False,
-        base_config: BaseConfig = BaseConfig,
+            self,
+            label: str,
+            color: BaseConfig.BUTTONS_COLORS,
+            new_line_after: bool = False,
+            base_config: BaseConfig = BaseConfig,
     ):
         self.label = label
         self.color: base_config.BUTTONS_COLORS = color
@@ -18,14 +18,14 @@ class _Button:
 
 
 @dataclass()
-class _Inline_button:
+class _InlineButton:
     def __init__(
-        self,
-        label: str,
-        color: BaseConfig.BUTTONS_COLORS,
-        payload: dict,
-        new_line_after: bool = False,
-        base_config: BaseConfig = BaseConfig,
+            self,
+            label: str,
+            color: BaseConfig.BUTTONS_COLORS,
+            payload: dict,
+            new_line_after: bool = False,
+            base_config: BaseConfig = BaseConfig,
     ):
         self.label = label
         self.color: base_config.BUTTONS_COLORS = color
@@ -129,7 +129,7 @@ class Buttons:
         if self._rows > self.config.MAX_BUTTON_ROWS:
             raise ValueError(f"[ERROR] Too much rows: {self._rows}")
         if self._buttons_amount > 0:
-            if self.buttons[-1].new_line_after == True:
+            if self.buttons[-1].new_line_after:
                 self.buttons[-1].new_line_after = False
         return self.buttons
 
@@ -153,14 +153,14 @@ class Inline_buttons:
     :type _buttons_amount: int, default 0
     """
 
-    buttons: List[_Inline_button] = field(default_factory=list)
+    buttons: List[_InlineButton] = field(default_factory=list)
     config: BaseConfig = BaseConfig
     _since_new_line: int = 0
     _rows: int = 0
     _buttons_amount: int = 0
 
     def add_button(
-        self, label: str, color: config.BUTTONS_COLORS, payload: dict
+            self, label: str, color: config.BUTTONS_COLORS, payload: dict
     ) -> None:
         """
         Adds a new button to the inline keyboard.
@@ -179,7 +179,7 @@ class Inline_buttons:
         self._since_new_line += 1
         self._buttons_amount += 1
         self.buttons.append(
-            _Inline_button(label=label, color=color, payload=payload)
+            _InlineButton(label=label, color=color, payload=payload)
         )
         if self.config.DEBUG_STATE:
             print(f"[INFO] Added button: {self.buttons[-1]}")
@@ -222,7 +222,7 @@ class Inline_buttons:
                 f"[ERROR] Can't remove last button, no buttons in list"
             )
 
-    def confirm(self) -> List[_Inline_button]:
+    def confirm(self) -> List[_InlineButton]:
         """
         Confirm the buttons and return a list of inline buttons.
         Fixing the wrong lining
@@ -238,6 +238,6 @@ class Inline_buttons:
         if self._rows > self.config.MAX_BUTTON_ROWS:
             raise ValueError(f"[ERROR] Too much rows: {self._rows}")
         if self._buttons_amount > 0:
-            if self.buttons[-1].new_line_after == True:
+            if self.buttons[-1].new_line_after:
                 self.buttons[-1].new_line_after = False
         return self.buttons
