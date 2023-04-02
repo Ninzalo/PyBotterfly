@@ -2,7 +2,7 @@ Metadata-Version: 2.1
 Name: pybotterfly
 Version: 0.0.1
 Summary: Build multi-messenger chatbots with ease using our scalable Python library, designed to simplify listener integration for various platforms
-Home-page: https://github.com/Ninzalo/bots_lib
+Home-page: https://github.com/Ninzalo/PyBotterfly
 Author: Ninzalo
 License: MIT
 Project-URL: Homepage, https://github.com/Ninzalo/PyBotterfly
