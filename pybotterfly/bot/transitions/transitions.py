@@ -192,6 +192,10 @@ class Transitions:
                         user_messenger=user_messenger,
                     )
                     return needed_func
+                needed_func = await self.error_return(
+                    user_messenger_id, user_messenger
+                )
+                return needed_func
 
     async def _func_returner(
         self,
