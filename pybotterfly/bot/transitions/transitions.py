@@ -69,6 +69,8 @@ class Transitions:
             realized the transition, or if multiple 'else' blocks
             aren't supported.
         """
+        if isinstance(trigger, str):
+            trigger = trigger.lower()
         new_transition = Transition(
             trigger=trigger, from_stage=src, to_stage=dst
         )
@@ -231,7 +233,7 @@ class Transitions:
                         amount += 1
         return amount
 
-    def _get_all_source_stages(self) -> List[Transition.to_stage]:
+    def _get_all_source_stages(self) -> List[Coroutine]:
         list_of_transitions = list(
             set([transition.from_stage for transition in self.transitions])
         )

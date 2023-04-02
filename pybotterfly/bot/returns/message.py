@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
-from pybotterfly.bot.returns.buttons import Buttons, Inline_buttons
+from pybotterfly.bot.returns.buttons import Buttons, InlineButtons
 from pybotterfly.base_config import BaseConfig
 
 
@@ -18,14 +18,14 @@ class Return:
     :param keyboard: Optional buttons to include with the response.
     :type keyboard: Buttons or None
     :param inline_keyboard: Optional inline buttons to include with the response.
-    :type inline_keyboard: Inline_buttons or None
+    :type inline_keyboard: InlineButtons or None
     """
 
     user_messenger_id: int
     user_messenger: BaseConfig.ADDED_MESSENGERS
     text: str
     keyboard: Buttons | None = None
-    inline_keyboard: Inline_buttons | None = None
+    inline_keyboard: InlineButtons | None = None
 
 
 @dataclass()
@@ -45,7 +45,7 @@ class Returns:
         user_messenger: BaseConfig.ADDED_MESSENGERS,
         text: str,
         keyboard: Buttons | None = None,
-        inline_keyboard: Inline_buttons | None = None,
+        inline_keyboard: InlineButtons | None = None,
     ):
         """
         Add a new return message to the list of returns.
@@ -60,7 +60,7 @@ class Returns:
         :type keyboard: Buttons or None
         :param inline_keyboard: An optional inline keyboard to be displayed
             to the user.
-        :type inline_keyboard: Inline_buttons or NoneType
+        :type inline_keyboard: InlineButtons or NoneType
         :raises: None
         """
         new_return = Return(

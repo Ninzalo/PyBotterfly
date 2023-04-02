@@ -69,11 +69,11 @@ class DefaultVkReplier:
         :return: A `vk_api.keyboard.VkKeyboard` object.
         :rtype: Optional[vk_api.keyboard.VkKeyboard]
         """
-        if keyboard is None and inline_keyboard is None:
+        if keyboard == None and inline_keyboard == None:
             return None
         buttons = inline_keyboard or keyboard or []
         keyboard_cls = VkKeyboard(one_time=False, inline=bool(inline_keyboard))
-        for button in buttons:
+        for button in buttons.buttons:
             kwargs = {"label": button.label}
             if inline_keyboard:
                 kwargs["payload"] = button.payload
@@ -167,7 +167,7 @@ class DefaultTgReplier:
             buttons are given.
         :rtype: tg_inline_kb | tg_kb | None
         """
-        if keyboard is None and inline_keyboard is None:
+        if keyboard == None and inline_keyboard == None:
             return None
         buttons = inline_keyboard or keyboard or []
         keyboard_cls = (
@@ -175,7 +175,7 @@ class DefaultTgReplier:
             if inline_keyboard is not None
             else TgKeyboard(resize_keyboard=True)
         )
-        for button in buttons:
+        for button in buttons.buttons:
             button_text = (
                 f"{await self._tg_color_picker(color=button.color)}"
                 f"{button.label}"

@@ -135,7 +135,7 @@ class Buttons:
 
 
 @dataclass()
-class Inline_buttons:
+class InlineButtons:
     """
     A class to represent a list of inline buttons.
 
