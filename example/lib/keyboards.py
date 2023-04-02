@@ -16,7 +16,10 @@ async def second_kb() -> InlineButtons:
     keyboard.add_button(
         label="Go to next",
         color="primary",
-        payload={'t': 'd', 'a': 'g_t_t_p'}  # words 'go', 'to', 'third', 'page' are in the 'words to shorten' list
+        payload={
+            "t": "d",
+            "a": "g_t_t_p",
+        },  # words 'go', 'to', 'third', 'page' are in the 'words to shorten' list
     )
     keyboard.confirm()
     return keyboard
