@@ -12,5 +12,3 @@ venv/
 
 *.egg-info/
 *.egg
-
-dist/
