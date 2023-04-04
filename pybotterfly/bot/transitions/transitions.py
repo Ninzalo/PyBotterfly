@@ -159,7 +159,7 @@ class Transitions:
                 "Transitions not compiled. "
                 f"\nEnsure to compile transitions to run"
             )
-        if message.text is not None and message.payload is not None:
+        if message.text != None and message.payload != None:
             message.text = None
         if message.text is not None:
             message.text = replace_emoji(message.text, replace="")
@@ -169,14 +169,14 @@ class Transitions:
             for transition in stage_transitions:
                 if transition.trigger == message.text.lower():
                     answer = await transition.to_stage(
-                        user_messenger_id, user_messenger
+                        user_messenger_id, user_messenger, message.text
                     )
                     return answer
             else_transition = await self._get_none_transition_by_stage(
                 stage=user_stage
             )
             answer = await else_transition.to_stage(
-                user_messenger_id, user_messenger
+                user_messenger_id, user_messenger, message.text
             )
             return answer
         elif message.payload is not None:
@@ -190,10 +190,11 @@ class Transitions:
                         output=output,
                         user_messenger_id=user_messenger_id,
                         user_messenger=user_messenger,
+                        message=message.payload,
                     )
                     return needed_func
                 needed_func = await self.error_return(
-                    user_messenger_id, user_messenger
+                    user_messenger_id, user_messenger, message.payload
                 )
                 return needed_func
 
@@ -202,16 +203,18 @@ class Transitions:
         output: dict,
         user_messenger_id: int,
         user_messenger: config.ADDED_MESSENGERS,
+        message: str,
     ):
         if output.get("data") == {}:
             return_cls = await output.get("dst")(
-                user_messenger_id, user_messenger
+                user_messenger_id, user_messenger, message
             )
             return return_cls
         else:
             return_cls = await output.get("dst")(
                 user_messenger_id,
                 user_messenger,
+                message,
                 output.get("data"),
             )
             return return_cls
@@ -276,15 +279,18 @@ class Transitions:
                 raise RuntimeError(f"Payloads aren't compiled")
 
     def _transition_args_check(self, func: Coroutine) -> None:
-        if inspect.getfullargspec(func)[0] != [
+        list_of_args = [
             "user_messenger_id",
             "user_messenger",
-        ]:
-            error_str = (
-                f"Transition dst should have 'user_messenger_id' "
-                f"and 'user_messenger' args:\n{func}"
-            )
-            raise ValueError(error_str)
+            "message",
+        ]
+        func_args = inspect.getfullargspec(func)[0] 
+        for arg in list_of_args:
+            if arg not in func_args:
+                error_str = (
+                    f"Transition to_stage should have '{arg}' arg:\n{func}"
+                )
+                raise ValueError(error_str)
 
     async def _get_transitions_by_stage(self, stage: str) -> List[Transition]:
         return [

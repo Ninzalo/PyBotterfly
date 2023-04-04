@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import inspect
 from typing import Any, Coroutine, List
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.transitions.schedule import ScheduledJob
@@ -170,6 +171,8 @@ class Payloads:
             raise RuntimeError(error_str)
         if self._compiled:
             raise RuntimeError(f"Payloads already compiled.")
+        for payload in self.payloads:
+            self._payload_args_check(func=payload.dst)
         self._compiled = True
         if self.config.DEBUG_STATE:
             print(f"\n[SUCCESS] Payloads compiled successfully\n")
@@ -264,7 +267,8 @@ class Payloads:
             return
         if not isinstance(value, type_of_value):
             error_str = (
-                f"Value '{value}' has type '{type(value)}' instead of '{type_of_value}'"
+                f"Value '{value}' has type '{type(value)}' "
+                f"instead of '{type_of_value}'"
             )
             raise TypeError(error_str)
 
@@ -390,8 +394,8 @@ class Payloads:
                     ref_data_keys_list.append(type_keys_and_value.key)
                     ref_data_values_list.append(type_keys_and_value.value)
                 if (
-                        ref_data_keys_list == data_keys_list
-                        and ref_data_values_list == data_values_list
+                    ref_data_keys_list == data_keys_list
+                    and ref_data_values_list == data_values_list
                 ):
                     return payload
 
@@ -443,3 +447,15 @@ class Payloads:
         if new_payload in self.payloads:
             raise RuntimeError(f"Payload already exists")
         self.payloads.append(new_payload)
+
+    def _payload_args_check(self, func: Coroutine) -> None:
+        list_of_args = [
+            "user_messenger_id",
+            "user_messenger",
+            "message",
+        ]
+        func_args = inspect.getfullargspec(func)[0]
+        for arg in list_of_args:
+            if arg not in func_args:
+                error_str = f"Payload dst should have '{arg}' arg:\n{func}"
+                raise ValueError(error_str)

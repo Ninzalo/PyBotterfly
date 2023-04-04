@@ -17,6 +17,8 @@ async def third_str() -> str:
     return text
 
 
-async def error_return() -> str:
+async def error_return(message: str | None = None) -> str:
     text = f"Input error :c"
+    if message != None:
+        text += f"\nUnsopported message: {message}"
     return text
