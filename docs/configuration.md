@@ -1,3 +1,5 @@
+[Back](https://github.com/Ninzalo/PyBotterfly)
+
 ## Payload transitions configuration
 
 #### Instantiation of the class
@@ -47,7 +49,7 @@ payloads.add_error_return(
 )
 ```
 
-#### Payloads transitions compilation
+#### Payload transitions compilation
 This will make payload transitions be available in the FSM
 ```python
 transitions.compile()
@@ -67,7 +69,7 @@ An instance of Transitions class to add transitions to Finite State Machine
 from pybotterfly.bot.transitions.transitions import Transitions
 
 transitions = Transitions(
-    payloads=payloads, # specify your payloads transitions of Payloads class
+    payloads=payloads, # Payload transitions of Payloads class
     config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
@@ -109,8 +111,8 @@ example/configs/transitions/transitions_config.py
 from pybotterfly.message_handler.message_handler import MessageHandler
 
 message_handler = MessageHandler(
-    user_stage_getter=get_user_stage_func, # specify your coroutine to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
-    transitions=transitions, # specify your transitions of Transitions class
+    user_stage_getter=get_user_stage_func, # :Coroutine. Function to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
+    transitions=transitions, # Transitions of Transitions class
     base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
@@ -119,3 +121,64 @@ message_handler = MessageHandler(
 ```shell
 example/configs/message_handler/message_handler_config.py
 ```
+
+## Messengers division
+
+#### Instantiation of the class
+An instance of MessengersDivision class to divide messages for different messengers
+```python
+from pybotterfly.bot.reply.reply_division import MessengersDivision
+
+messengers = MessengersDivision(
+    config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+#### Adding messengers
+You can divide messages from different messengers with `messengers.register_messenger` method.
+```python
+messengers.register_messenger(
+    trigger="tg", # :str. The variable by which the separation occurs
+    reply_func=DefaultTgReplier(
+        tg_bot=bot, # An instance of preconfigured TG bot
+        config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    ).tg_answer, # : Coroutine. A function that sends message to the user
+    messages_per_second=4, # :int. Message reply rate in messages per second
+)
+```
+
+#### Messengers division compilation 
+Compiles messengers for messages division
+```python
+messengers.compile()
+```
+
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/reply/reply_config.py):
+```shell
+example/configs/reply/reply_config.py
+```
+
+
+## Base config
+
+#### Instantiation of the class
+An instance of BaseConfig class to change the base configuration
+```python
+from pybotterfly.base_config import BaseConfig
+from typing import Literal, TypeAlias
+
+BASE_CONFIG = BaseConfig()
+BASE_CONFIG.ADDED_MESSENGERS: TypeAlias = Literal["vk", "tg"] # Messengers added to the bot
+BASE_CONFIG.BUTTONS_COLORS: TypeAlias = Literal[
+    "primary", "secondary", "positive", "negative" # Default colors for VK keyboard
+]
+BASE_CONFIG.DEBUG_STATE: bool = True  # =True is recommended while setting up the bot logic
+```
+
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/config.py):
+```shell
+example/configs/config.py
+```
+
+
+[Back](https://github.com/Ninzalo/PyBotterfly)
