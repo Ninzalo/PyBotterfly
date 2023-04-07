@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TypeAlias
 
 
 @dataclass()
@@ -36,8 +36,8 @@ class BaseConfig:
     :vartype MAX_BUTTONS_AMOUNT: int
     """
 
-    ADDED_MESSENGERS = Literal["vk", "tg"]
-    BUTTONS_COLORS = Literal["primary", "secondary", "positive", "negative"]
+    ADDED_MESSENGERS: TypeAlias = Literal["vk", "tg"]
+    BUTTONS_COLORS: TypeAlias = Literal["primary", "secondary", "positive", "negative"]
     DEBUG_STATE: bool = True
     MAX_BUTTONS_IN_ROW = 4
     MAX_BUTTON_ROWS = 9

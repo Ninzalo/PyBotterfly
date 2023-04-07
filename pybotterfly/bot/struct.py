@@ -23,6 +23,6 @@ class MessageStruct:
     """
 
     user_id: int
-    messenger: BaseConfig.ADDED_MESSENGERS = BaseConfig.ADDED_MESSENGERS
+    messenger: BaseConfig.ADDED_MESSENGERS
     text: str | None = None
     payload: dict | None = None
