@@ -13,7 +13,7 @@ payloads = Payloads(
 ```
 
 #### Add words to shorten
-Messengers can’t handle more than specific amount of bytes in payloads. We should compress the data of the payload. (Not recommended to add words with the same first letter). 
+Messengers can’t handle more than specific amount of bytes in payloads. We should compress the data of the payload with `papayloads.add_words_to_shorten` method. Not recommended to add words with the same first letter). 
 ‘words’ -> ‘w’, ‘to’ -> ‘t’, ‘shorten’ -> ‘s’.
 ```python
 payloads.add_words_to_shorten(
@@ -42,7 +42,7 @@ payloads.add_payload(
 ```
 
 #### Payload transition error return 
-You can add the 'error_return'. When user's input is not added to payload transitions
+You can add the 'error_return' with `payloads.add_error_return` method. When user's input is not added to payload transitions
 ```python
 payloads.add_error_return(
     error_return=error_page_coroutine # :Coroutine. The destination of error payload transition 
@@ -85,7 +85,7 @@ transitions.add_transition(
 ```
 
 #### Transitions error return 
-You can add the 'error_return'. When user's input is not added to transitions
+You can add the 'error_return' with `transitions.add_error_return` method. When user's input is not added to transitions
 ```python
 transitions.add_error_return(
     error_return=error_page_coroutine # :Coroutine. The destination of error transition 
