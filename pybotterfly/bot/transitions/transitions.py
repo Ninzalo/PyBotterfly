@@ -203,7 +203,7 @@ class Transitions:
         output: dict,
         user_messenger_id: int,
         user_messenger: config.ADDED_MESSENGERS,
-        message: str,
+        message: dict,
     ):
         if output.get("data") == {}:
             return_cls = await output.get("dst")(
@@ -240,7 +240,7 @@ class Transitions:
                         amount += 1
         return amount
 
-    def _get_all_source_stages(self) -> List[Coroutine]:
+    def _get_all_source_stages(self) -> List[str]:
         list_of_transitions = list(
             set([transition.from_stage for transition in self.transitions])
         )
