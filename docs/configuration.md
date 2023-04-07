@@ -99,7 +99,7 @@ transitions.compile()
 ```
 
 
-#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/transitions/transitions_config.py):
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/transitions/transitions_config.py)
 ```shell
 example/configs/transitions/transitions_config.py
 ```
@@ -117,7 +117,7 @@ message_handler = MessageHandler(
 )
 ```
 
-#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/message_handler/message_handler_config.py): 
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/message_handler/message_handler_config.py)
 ```shell
 example/configs/message_handler/message_handler_config.py
 ```
@@ -153,7 +153,7 @@ Compiles messengers for messages division
 messengers.compile()
 ```
 
-#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/reply/reply_config.py):
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/reply/reply_config.py)
 ```shell
 example/configs/reply/reply_config.py
 ```
@@ -175,7 +175,7 @@ BASE_CONFIG.BUTTONS_COLORS: TypeAlias = Literal[
 BASE_CONFIG.DEBUG_STATE: bool = True  # =True is recommended while setting up the bot logic
 ```
 
-#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/config.py):
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/config.py)
 ```shell
 example/configs/config.py
 ```
