@@ -26,7 +26,7 @@ git clone https://github.com/Ninzalo/PyBotterfly.git
 mv PyBotterfly/example .
 ```
 
-#### Delete Pybotterfly folder
+#### Delete PyBotterfly folder
 
 ```shell
 rm -rf PyBotterfly
@@ -44,9 +44,35 @@ pip install -r example/requirements.txt
 cd example
 ```
 
+#### Create database
+
+Manually create your database
+
 #### Set configuration variables
 
 Location of the main config: `configs/config.py`
+
+## Fast installation (for copy-pasting)
+
+Ensure that `python` is a correct alias for your environment
+
+```shell
+python -m venv venv
+source ./venv/bin/activate
+git clone https://github.com/Ninzalo/PyBotterfly.git
+mv PyBotterfly/example .
+rm -rf PyBotterfly
+pip install -r example/requirements.txt
+cd example
+```
+
+## Running the example project
+
+#### Add table for your database
+
+```shell
+python create_users_table.py
+```
 
 #### Run example server
 
@@ -62,20 +88,6 @@ python tg_client.py
 
 ```shell
 python vk_client.py
-```
-
-## Fast installation (for copy-pasting)
-
-Ensure that `python` is a correct alias for your environment
-
-```shell
-python -m venv venv
-source ./venv/bin/activate
-git clone https://github.com/Ninzalo/PyBotterfly.git
-mv PyBotterfly/example .
-rm -rf PyBotterfly
-pip install -r example/requirements.txt
-cd example
 ```
 
 [Back](https://github.com/Ninzalo/PyBotterfly)
