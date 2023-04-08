@@ -250,6 +250,8 @@ start_vk_client(
 
 Running test
 ```python
+from pybotterfly.runners.vk_client import run_test
+
 run_test(
     test_id=TEST_ID_VK, # :int. You VK id for testing
     messages_amount=30, # :int. Amount of test messages
