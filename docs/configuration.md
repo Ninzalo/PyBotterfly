@@ -198,6 +198,9 @@ run_server(
 ```
 
 [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/server.py)
+```shell
+example/server.py
+```
 
 #### Default TG client
 Starting TG client
@@ -228,6 +231,9 @@ run_test(
 ```
 
 [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/tg_client.py)
+```shell
+example/tg_client.py
+```
 
 #### Default VK client
 Starting VK client
@@ -255,6 +261,9 @@ run_test(
 ```
 
 [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/vk_client.py)
+```shell
+example/vk_client.py
+```
 
 #### YOU CAN REPLACE EXISTING DEFAULT CLIENTS WITH YOUR OWN 
 
