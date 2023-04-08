@@ -13,12 +13,10 @@ class Server:
     def __init__(
         self,
         messengers: MessengersDivision,
-        message_reply_rate: int | float,
         message_handler: MessageHandler,
         base_config: BaseConfig,
     ) -> None:
         self._messengers = messengers
-        self._message_reply_rate = message_reply_rate
         self._message_handler = message_handler
         self._config = base_config
         self._check_errors()
@@ -106,7 +104,6 @@ class Server:
 
 def run_server(
     messengers: MessengersDivision,
-    message_reply_rate: int | float,
     message_handler: MessageHandler,
     local_ip: str,
     local_port: int,
@@ -118,10 +115,6 @@ def run_server(
     :param messengers: An instance of the Messengers_division class that
         represents the messengers to be used by the bot.
     :type messengers: Messengers_division
-
-    :param message_reply_rate: The rate at which the bot should reply to
-        incoming messages, measured in messages per second.
-    :type message_reply_rate: int | float
 
     :param message_handler: An instance of the Message_handler class that
         represents the bot's message handler.
@@ -145,7 +138,6 @@ def run_server(
     """
     server = Server(
         messengers=messengers,
-        message_reply_rate=message_reply_rate,
         message_handler=message_handler,
         base_config=base_config,
     )
