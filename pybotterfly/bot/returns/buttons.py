@@ -6,11 +6,11 @@ from pybotterfly.base_config import BaseConfig
 @dataclass()
 class _Button:
     def __init__(
-            self,
-            label: str,
-            color: BaseConfig.BUTTONS_COLORS,
-            new_line_after: bool = False,
-            base_config: BaseConfig = BaseConfig,
+        self,
+        label: str,
+        color: BaseConfig.BUTTONS_COLORS,
+        new_line_after: bool = False,
+        base_config: BaseConfig = BaseConfig,
     ):
         self.label = label
         self.color: base_config.BUTTONS_COLORS = color
@@ -20,12 +20,12 @@ class _Button:
 @dataclass()
 class _InlineButton:
     def __init__(
-            self,
-            label: str,
-            color: BaseConfig.BUTTONS_COLORS,
-            payload: dict,
-            new_line_after: bool = False,
-            base_config: BaseConfig = BaseConfig,
+        self,
+        label: str,
+        color: BaseConfig.BUTTONS_COLORS,
+        payload: dict,
+        new_line_after: bool = False,
+        base_config: BaseConfig = BaseConfig,
     ):
         self.label = label
         self.color: base_config.BUTTONS_COLORS = color
@@ -160,7 +160,7 @@ class InlineButtons:
     _buttons_amount: int = 0
 
     def add_button(
-            self, label: str, color: config.BUTTONS_COLORS, payload: dict
+        self, label: str, color: config.BUTTONS_COLORS, payload: dict
     ) -> None:
         """
         Adds a new button to the inline keyboard.

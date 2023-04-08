@@ -17,7 +17,7 @@ Messengers can’t handle more than specific amount of bytes in payloads. We sho
 ‘words’ -> ‘w’, ‘to’ -> ‘t’, ‘shorten’ -> ‘s’.
 ```python
 payloads.add_words_to_shorten(
-    word=["words", "to", "shorten"]
+    word=["words", "to", "shorten"] # :str | List[str]
 )
 ```
 
@@ -107,6 +107,7 @@ example/configs/transitions/transitions_config.py
 
 ## Message handler configuration
 
+#### Instantiation of the class
 ```python
 from pybotterfly.message_handler.message_handler import MessageHandler
 
@@ -140,7 +141,7 @@ You can divide messages from different messengers with `messengers.register_mess
 messengers.register_messenger(
     trigger="tg", # :str. The variable by which the separation occurs
     reply_func=DefaultTgReplier(
-        tg_bot=bot, # An instance of preconfigured TG bot
+        tg_bot=bot, # An instance of preconfigured TG Bot
         config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
     ).tg_answer, # : Coroutine. A function that sends message to the user
     messages_per_second=4, # :int. Message reply rate in messages per second
@@ -179,6 +180,83 @@ BASE_CONFIG.DEBUG_STATE: bool = True  # =True is recommended while setting up th
 ```shell
 example/configs/config.py
 ```
+
+## Scripts to run
+
+#### Server
+Build your backend server
+```python
+from pybotterfly.runners.server import run_server
+
+run_server(
+    messengers=messengers,  # :MessengersDivision. An instance of preconfigured MessengersDivision class
+    message_handler=message_handler,  # :MessageHandler. An instance of preconfigured MessageHandler class
+    local_ip=LOCAL_IP,  # :str. Your local ip
+    local_port=LOCAL_PORT,  # :int. Your local port
+    base_config=BASE_CONFIG,  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+[Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/server.py)
+
+#### Default TG client
+Starting TG client
+```python
+
+from pybotterfly.runners.tg_client import start_tg_client
+
+start_tg_client(
+    dispatcher=dp, # Your preconfigured TG Dispatcher
+    handler_ip=LOCAL_IP, # :str. Your local ip
+    handler_port=LOCAL_PORT, # :int. Your local port
+    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+Running test
+```python
+from pybotterfly.runners.tg_client import run_test
+
+run_test(
+    test_id=TEST_ID_TG, # :int. You TG id for testing
+    messages_amount=30, # :int. Amount of test messages
+    dispatcher=dp, # Your preconfigured TG Dispatcher
+    handler_ip=LOCAL_IP, # :str. Your local ip
+    handler_port=LOCAL_PORT, # :int. Your local port
+    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+[Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/tg_client.py)
+
+#### Default VK client
+Starting VK client
+```python
+from pybotterfly.runners.vk_client import start_vk_client, run_test
+
+start_vk_client(
+    handler=bot, # Your preconfigured VK Bot
+    handler_ip=LOCAL_IP, # :str. Your local ip
+    handler_port=LOCAL_PORT, # :int. Your local port
+    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+Running test
+```python
+run_test(
+    test_id=TEST_ID_VK, # :int. You VK id for testing
+    messages_amount=30, # :int. Amount of test messages
+    handler=bot, # Your preconfigured VK Bot
+    handler_ip=LOCAL_IP, # :str. Your local ip
+    handler_port=LOCAL_PORT, # :int. Your local port
+    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+)
+```
+
+[Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/vk_client.py)
+
+#### YOU CAN REPLACE EXISTING DEFAULT CLIENTS WITH YOUR OWN 
 
 
 [Back](https://github.com/Ninzalo/PyBotterfly)

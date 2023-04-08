@@ -284,7 +284,7 @@ class Transitions:
             "user_messenger",
             "message",
         ]
-        func_args = inspect.getfullargspec(func)[0] 
+        func_args = inspect.getfullargspec(func)[0]
         for arg in list_of_args:
             if arg not in func_args:
                 error_str = (
