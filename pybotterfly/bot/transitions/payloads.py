@@ -233,14 +233,8 @@ class Payloads:
         reference = self._find_exact_reference(
             main_type_value=main_type, given_dict=entry_dict
         )
-        data_output = dict(
-            zip(
-                reference.data_keys,
-                [entry_dict.get(value) for value in reference.data_keys],
-            )
-        )
-        output_keys_list = ["data", "dst", "src"]
-        output_data_list = [data_output, reference.dst, reference.src]
+        output_keys_list = ["dst", "src"]
+        output_data_list = [reference.dst, reference.src]
         return dict(zip(output_keys_list, output_data_list))
 
     def _shortener(self, value: str) -> str:

@@ -19,6 +19,8 @@ async def second_kb() -> InlineButtons:
         payload={
             "t": "d",
             "a": "g_t_t_p",
+            "d": 123,
+            "p": 111,
         },  # words 'go', 'to', 'third', 'page' are in the 'words to shorten' list
     )
     keyboard.confirm()

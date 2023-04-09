@@ -53,7 +53,7 @@ async def third_page(
         user_messenger_id=user_messenger_id,
         user_messenger=user_messenger,
     )
-    text = await texts.third_str()
+    text = await texts.third_str(message=message)
     keyboard = await keyboards.third_kb()
     return_cls = Returns()
     await return_cls.add_return(

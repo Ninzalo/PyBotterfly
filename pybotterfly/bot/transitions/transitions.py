@@ -186,38 +186,14 @@ class Transitions:
                     user_stage == output.get("src")
                     or output.get("src") == "any"
                 ):
-                    needed_func = await self._func_returner(
-                        output=output,
-                        user_messenger_id=user_messenger_id,
-                        user_messenger=user_messenger,
-                        message=message.payload,
+                    needed_func = await output.get("dst")(
+                        user_messenger_id, user_messenger, message.payload
                     )
                     return needed_func
                 needed_func = await self.error_return(
                     user_messenger_id, user_messenger, message.payload
                 )
                 return needed_func
-
-    async def _func_returner(
-        self,
-        output: dict,
-        user_messenger_id: int,
-        user_messenger: config.ADDED_MESSENGERS,
-        message: dict,
-    ):
-        if output.get("data") == {}:
-            return_cls = await output.get("dst")(
-                user_messenger_id, user_messenger, message
-            )
-            return return_cls
-        else:
-            return_cls = await output.get("dst")(
-                user_messenger_id,
-                user_messenger,
-                message,
-                output.get("data"),
-            )
-            return return_cls
 
     def _counter_none(self, src: str) -> int:
         amount = 0

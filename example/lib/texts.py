@@ -8,12 +8,16 @@ async def second_str() -> str:
     return text
 
 
-async def third_str() -> str:
+async def third_str(message: dict | None = None) -> str:
     text = (
         f"This is the third page!\n"
         f"You can go back by tapping the 'Go to previous' button\n"
         f"Or you can go to the beginning by tapping the 'Go to beginning' button"
     )
+    if message != None:
+        text += (
+            f"\n\nYour data from payload: {message.get('d'), message.get('p')}"
+        )
     return text
 
 
