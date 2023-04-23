@@ -16,7 +16,8 @@ async def third_str(message: dict | None = None) -> str:
     )
     if message != None:
         text += (
-            f"\n\nYour data from payload: {message.get('d'), message.get('p')}"
+            f"\n\nYour data from payload: "
+            f"{message.get('data'), message.get('plus')}"
         )
     return text
 

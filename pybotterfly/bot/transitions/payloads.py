@@ -1,446 +1,598 @@
-from dataclasses import dataclass, field
 import inspect
-from typing import Any, Coroutine, List
+from dataclasses import dataclass, field
+from collections import Counter
+from typing import Coroutine, List, Tuple, Union, Dict, Any
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.transitions.schedule import ScheduledJob
+
+# from pybotterfly.bot.transitions.schedule import ScheduledJob
 
 
 @dataclass()
-class TypeData:
-    key: str
-    value: str
+class ShortenedItem:
+    item: str
+
+    def __post_init__(self) -> None:
+        self.item = self.item.strip()
+        if len(self.item) < 1:
+            error_str = f"'{self.item}' is too short"
+            raise ValueError(error_str)
+        self.short_item = self.item[0]
+
+    def __repr__(self) -> str:
+        return_str = (
+            f"{self.__class__.__name__}(item='{self.item}', "
+            f"short_item='{self.short_item}')"
+        )
+        return return_str
+
+
+@dataclass()
+class ShortenedRuledItem(ShortenedItem):
+    rules: List[ShortenedItem]
+
+    def __post_init__(self) -> None:
+        self.short_item = self.item
+        split_item = self.item.split("_")
+        new_short_item = ""
+        for num, word in enumerate(split_item):
+            adding_word = word
+            for rule in self.rules:
+                if word == rule.item:
+                    adding_word = rule.short_item
+            if num != len(split_item) - 1:
+                new_short_item += "".join(f"{adding_word}_")
+            else:
+                new_short_item += "".join(f"{adding_word}")
+        if new_short_item == "":
+            new_short_item = self.item
+        self.short_item = new_short_item
+
+    def __repr__(self) -> str:
+        return_str = (
+            f"{self.__class__.__name__}(item='{self.item}', "
+            f"short_item='{self.short_item}')"
+        )
+        return return_str
+
+
+@dataclass()
+class Trigger:
+    rules: List[ShortenedItem]
+    key: ShortenedItem
+    value: ShortenedRuledItem
+
+    def __repr__(self):
+        return_str = (
+            f"{self.__class__.__name__}(key={self.key}, value={self.value}"
+        )
+        return return_str
 
 
 @dataclass()
 class Payload:
-    main_type_value: str
-    src: str
-    dst: Any
-    space_for_data: int
-    type_keys_and_values: List[TypeData] = field(default_factory=list)
-    data_keys: List[str] = field(default_factory=list)
+    main_key: ShortenedItem
+    main_value: ShortenedItem
+    rules: List[ShortenedItem]
+    triggers: List[Trigger]
+    data: List[ShortenedItem]
+    from_stage: str
+    to_stage: Coroutine
+
+    def __post_init__(self) -> None:
+        self.space_for_data = self.get_space_for_data()
+
+    def __repr__(self):
+        return_str = (
+            f"{self.__class__.__name__}(triggers={self.triggers}, "
+            f"data={self.data}, from_stage={self.from_stage}, "
+            f"to_stage={self.to_stage})"
+        )
+        return return_str
+
+    def get_space_for_data(self) -> int:
+        """
+        This function returns the amount of space that can be used for
+        data in the payload.
+        """
+        payload_dict = self.get_payload_dict()
+        additional_data = len(self.data)
+        length_of_payload = len(str(payload_dict).encode())
+        length = length_of_payload - additional_data
+        space_for_data = 64 - length
+        if (
+            len(self.rules) > 0
+            and space_for_data < additional_data
+            and additional_data > 0
+        ):
+            error_str = f"Not enough space for data in: {self.__repr__()}"
+            raise ValueError(error_str)
+        return space_for_data
+
+    def get_payload_dict(self) -> dict:
+        payload_dict = {self.main_key.short_item: self.main_value.short_item}
+        for trigger in self.triggers:
+            payload_dict[trigger.key.short_item] = trigger.value.short_item
+        for data_key in self.data:
+            payload_dict[data_key.short_item] = 0
+        return payload_dict
+
+    def _get_full_payload_dict(self) -> dict:
+        payload_dict = {self.main_key.item: self.main_value.item}
+        for trigger in self.triggers:
+            payload_dict[trigger.key.item] = trigger.value.item
+        for data_key in self.data:
+            payload_dict[data_key.item] = 0
+        return payload_dict
+
+    def __dict__(self) -> dict:
+        self_dict = {}
+        short_dict = {
+            "main": {
+                "main_key": self.main_key.short_item,
+                "main_value": self.main_value.short_item,
+            },
+            "payload": self.get_payload_dict(),
+            "from_stage": self.from_stage,
+            "to_stage": self.to_stage,
+            "space_for_data": self.space_for_data,
+        }
+        full_dict = {
+            "main": {
+                "main_key": self.main_key.item,
+                "main_value": self.main_value.item,
+            },
+            "payload": self._get_full_payload_dict(),
+            "from_stage": self.from_stage,
+            "to_stage": self.to_stage,
+            "space_for_data": self.space_for_data,
+        }
+        self_dict["short_dict"] = short_dict
+        self_dict["full_dict"] = full_dict
+        return self_dict
 
 
 @dataclass()
-class Payloads:
-    main_type: str = "type"
-    main_type_values: List[str] = field(default_factory=list)
-    payloads: List[Payload] = field(default_factory=list)
-    scheduled_jobs: List[ScheduledJob] = field(default_factory=list)
-    error_return: Payload | None = None
-    shorten: bool = True
-    words_to_shorten: List[str] = field(default_factory=list)
-    config: BaseConfig = BaseConfig
-    use_for: config.ADDED_MESSENGERS | None = "tg" if shorten else None
-    _compiled: bool = False
+class Classification:
+    rules: List[ShortenedItem]
+    main_value: ShortenedItem
+    payloads: List[Payload]
 
-    def __post_init__(self):
-        self.use_for = "tg" if self.shorten else None
-        if self.config.DEBUG_STATE:
-            print(f"Payloads are using for '{self.use_for}'")
+    def __dict__(self) -> dict:
+        self_dict = {"payloads": [item.__dict__() for item in self.payloads]}
+        return self_dict
 
-    def add_reference(self, path: str, src: str, dst: Coroutine) -> None:
-        """
-        Adds a reference payload to the state machine.
-        Allows you to add new payload based on existing references
 
-        :param path: The path of the reference in the format like
-            `main_type:main_type_value/type:type_value/id:/messenger:`, where
-            `main_type` is a main type key, `main_type_value` is a main type
-            value, `type` is a subtype key, `type_value` is a type value,
-            `id` and `messenger` are data type (you will get its value in
-            `run` func). You can rename them and add others.
-        :type path: str
+class Rules:
+    def __init__(self) -> None:
+        self.rules: List[ShortenedItem] = []
 
-        :param src: The source stage of the reference.
-        :type src: str
+    def _add_rule(self, word: str | List[str]) -> None:
+        if isinstance(word, list):
+            for w in word:
+                self._add_rule(word=w)
+            return
+        new_rule = ShortenedItem(item=word)
+        if new_rule in self.rules:
+            error_str = f"'{new_rule}' already exists"
+            raise ValueError(error_str)
+        self.rules.append(new_rule)
 
-        :param dst: The coroutine to be called after the reference is resolved.
-        :type dst: Coroutine
 
-        :raises RuntimeError: If the state machine is already compiled.
+class Payloads(Rules):
+    def __init__(self, config: BaseConfig = BaseConfig) -> None:
+        self.config = config
+        self.main_key: ShortenedItem = ShortenedItem(item="type")
+        self.classes: List[Classification] = []
+        self._error_payload: Payload | None = None
+        self._short_main_values: List[str] = []
+        self._main_key_changed: int = 0
+        self._compiled: bool = False
+        self._added_trigger_values_before_autoruling: Union[
+            Dict[Any, Any], List[Any]
+        ] = []
+        self._added_payloads_before_autoruling: Tuple[str, str, Coroutine] = []
+        self._rules_applied: bool = False
+        super().__init__()
 
-        :returns: None
-        """
-        if self._compiled:
-            error_str = (
-                f"Payloads already compiled."
-                f"\nEnsure to compile after all references added"
+    def apply_rules(self) -> None:
+        if self._rules_applied:
+            raise RuntimeError("Rules already applied")
+        self._rules_applied = True
+        self.classes = []
+        self.main_key = ShortenedItem(item="type")
+        self._short_main_values = []
+        self._main_key_changed = 0
+        self._set_trigger_values()
+        self._split_trigger_values()
+        self._count_items()
+        self._auto_add_rules()
+        for payload, src, dst in self._added_payloads_before_autoruling:
+            self.add_payload(payload=payload, from_stage=src, to_stage=dst)
+        self._added_trigger_values_before_autoruling = []
+        self._added_payloads_before_autoruling = []
+
+    def add_payload(
+        self, payload: str, from_stage: str, to_stage: Coroutine
+    ) -> Payload:
+        self._payload_args_check(func=to_stage)
+        if not self._rules_applied:
+            self._added_payloads_before_autoruling.append(
+                (payload, from_stage, to_stage)
             )
-            raise RuntimeError(error_str)
-        self._value_type_check(value=[path, src], type_of_value=str)
-        ref_dict = self._parse_path(path=path)
-        self._auto_create_payload(ref_dict=ref_dict, src=src, dst=dst)
-        if self.config.DEBUG_STATE:
-            print(f"Added reference payload: {ref_dict}")
-
-    def add_payload(self, path: str, src: str, dst: Coroutine) -> None:
-        """
-        Adds a new payload based on path to the state machine.
-
-        :param path: The path to the payload, in dot notation.
-        :type path: str
-        :param src: The source stage of the payload.
-        :type src: str
-        :param dst: The destination stage of the payload.
-        :type dst: Coroutine
-        :raises RuntimeError: If the state machine has already been compiled.
-        :raises TypeError: If either `path` or `src` are not strings.
-        """
-        if self._compiled:
-            error_str = (
-                f"Payloads already compiled."
-                f"\nEnsure to compile after all payloads added"
-            )
-            raise RuntimeError(error_str)
-        self._value_type_check(value=[path, src], type_of_value=str)
-        new_payload_dict = self._parse_path(path=path)
-        self._add_payload(new_dict=new_payload_dict, src=src, dst=dst)
-        if self.config.DEBUG_STATE:
-            print(f"Added payload: {new_payload_dict}")
-
-    def add_error_return(self, error_return: Any) -> None:
-        """
-        Adds an error return payload to the state machine.
-
-        :param error_return: The error return value.
-        :type error_return: Any
-        :raises RuntimeError: If an error return has already been added or
-            if the state machine has already been compiled.
-        """
-        if self.error_return is not None:
-            raise RuntimeError(f"Error return already added")
-        if self._compiled:
-            error_str = (
-                f"Payloads already compiled."
-                f"\nEnsure to compile after error return added"
-            )
-            raise RuntimeError(error_str)
-        self.error_return = Payload(
-            main_type_value="error",
-            src="any",
-            dst=error_return,
-            space_for_data=0,
+        main_value, list_of_triggers, list_of_data_items = self._parse_payload(
+            payload=payload
         )
-        if self.config.DEBUG_STATE:
-            print(f"Added error payload return: {self.error_return}")
-
-    def add_scheduled_job(self, payload: str, dst: Coroutine):
-        """
-        Adds a new scheduled job to the state machine.
-
-        :param payload: The payload of the job, as a dictionary.
-        :type payload: dict
-        :param dst: The coroutine that will be executed when the job is scheduled.
-        :type dst: Coroutine
-        :raises RuntimeError: If the state machine has already been compiled
-            or the job already exists.
-        """
-        if self._compiled:
-            raise RuntimeError(f"Payloads already compiled.")
-        new_job = ScheduledJob(dst=dst, payload=payload)
-        if new_job in self.scheduled_jobs:
+        new_payload = Payload(
+            main_key=self.main_key,
+            main_value=main_value,
+            rules=self.rules,
+            triggers=list_of_triggers,
+            data=list_of_data_items,
+            from_stage=from_stage,
+            to_stage=to_stage,
+        )
+        if main_value not in [
+            classification.main_value for classification in self.classes
+        ]:
+            self._add_new_classification(main_value=main_value)
+            if main_value.short_item in self._short_main_values:
+                error_str = (
+                    f"Can't add payload: '{payload}'. Short main value "
+                    f"'{main_value.short_item}' already exists"
+                )
+                raise ValueError(error_str)
+        self._short_main_values.append(main_value.short_item)
+        classification = self._get_classification(main_value=main_value)
+        if new_payload in classification.payloads:
             error_str = (
-                f"Failed to add scheduled job:\n{new_job} already exists"
+                f"Payload already exists in classification"
+                f"\nPayload: {new_payload}"
+                f"\nClassification: {classification}"
             )
-            raise RuntimeError(error_str)
-        if len(self.scheduled_jobs) == 0:
-            self.add_reference(path=payload, src="any", dst=dst)
-        else:
-            self.add_payload(path=payload, src="any", dst=dst)
-        self.scheduled_jobs.append(new_job)
+            raise ValueError(error_str)
+        classification.payloads.append(new_payload)
+        if len(new_payload.triggers) != len(
+            classification.payloads[0].triggers
+        ) or len(new_payload.data) != len(classification.payloads[0].data):
+            error_str = (
+                f"Length of new payload is not similar to existing "
+                f"classification's payloads"
+                f"\nError from: '{payload}'"
+            )
+            raise ValueError(error_str)
+        if self.config.DEBUG_STATE and self._rules_applied:
+            info_str = (
+                f"Added payload: "
+                f"{self._convert_payload_to_dict(entry_payload=new_payload)}"
+            )
+            print(info_str)
+        return new_payload
+
+    def shortener(self, payload_dict: dict) -> dict:
+        if not self._compiled:
+            return payload_dict
+        payload_main_key, payload_main_value = list(payload_dict.items())[0]
+        if (
+            payload_main_key != self.main_key.item
+            and payload_main_key != self.main_key.short_item
+        ):
+            return self._return_error_payload_dict()
+        needed_classification = None
+        for classification in self.classes:
+            if classification.main_value.item == payload_main_value:
+                needed_classification = classification
+        if needed_classification is None:
+            return self._return_error_payload_dict()
+        payload_dict_keys = [key for key, _ in payload_dict.items()]
+        result_payload = {f"{payload_main_key[0]}": f"{payload_main_value[0]}"}
+        result_triggers = {}
+        result_data = {}
+        for payload in needed_classification.payloads:
+            amount_of_payload_triggers = len(payload.triggers)
+            amount_of_payload_data = len(payload.data)
+            if (
+                len(list(payload_dict.items()))
+                != 1 + amount_of_payload_triggers + amount_of_payload_data
+            ):
+                continue
+            for trigger in payload.triggers:
+                key = None
+                if trigger.key.item in payload_dict_keys:
+                    key = trigger.key.item
+                if trigger.key.short_item in payload_dict_keys:
+                    key = trigger.key.short_item
+                if key == None:
+                    continue
+                value = None
+                if (
+                    payload_dict[key] == trigger.value.item
+                    or payload_dict[key] == trigger.value.short_item
+                ):
+                    value = trigger.value.short_item
+                if value == None:
+                    continue
+                result_triggers[key[0]] = value
+            data_space = 0
+            for data_item in payload.data:
+                key = None
+                if data_item.item in payload_dict_keys:
+                    key = data_item.item
+                if data_item.short_item in payload_dict_keys:
+                    key = data_item.short_item
+                if key == None:
+                    continue
+                result_data[key[0]] = payload_dict[key]
+                data_space += len(str(payload_dict[key]).encode())
+            if payload.space_for_data - data_space < 0:
+                result_triggers = {}
+        if result_triggers == {}:
+            return self._return_error_payload_dict()
+        for key, value in result_triggers.items():
+            result_payload[key] = value
+        for key, value in result_data.items():
+            result_payload[key] = value
+        if len(payload_dict_keys) != len(result_payload.items()):
+            return self._return_error_payload_dict()
+        return result_payload
+
+    def add_error_payload(self, payload: str, to_stage: Coroutine):
+        if self._compiled:
+            raise RuntimeError("Payloads already compiled")
+        if self._error_payload != None:
+            raise RuntimeError("Error payload already added")
+        error_payload = self.add_payload(
+            payload=payload, from_stage="any", to_stage=to_stage
+        )
+        self._error_payload = error_payload
         if self.config.DEBUG_STATE:
-            print(f"Added scheduled job: {new_job}")
+            print(f"Added error payload: '{payload}'")
 
     def compile(self) -> None:
-        """
-        Compiles the payloads for the state machine.
-        Prevents you from adding new payloads at runtime.
-
-        :raises RuntimeError: If no payloads were added or if the error
-            payload was not added.
-        :raises RuntimeError: If the state machine has already been compiled.
-        """
-        if self.payloads == []:
-            error_str = f"Failed to compile payloads \nNo payloads added"
+        if self.classes == []:
+            error_str = f"Failed to compile payloads. No payloads added"
             raise RuntimeError(error_str)
-        if self.error_return is None:
+        if self._error_payload == None:
             error_str = (
-                f"Failed to compile payloads\nError payload wasn't added"
+                "No error payload added. Use 'add_error_payload' "
+                "method before compiling"
             )
             raise RuntimeError(error_str)
         if self._compiled:
-            raise RuntimeError(f"Payloads already compiled.")
-        for payload in self.payloads:
-            self._payload_args_check(func=payload.dst)
+            raise RuntimeError("Payloads already compiled")
         self._compiled = True
         if self.config.DEBUG_STATE:
             print(f"\n[SUCCESS] Payloads compiled successfully\n")
 
-    def add_words_to_shorten(self, word: str | List[str]) -> None:
-        """
-        Adds one or more words to the list of words that can be shortened.
-
-        :param word: A string or a list of strings representing the words to add.
-        :type word: str or List[str]
-        :raises TypeError: If `word` is neither a string nor a list of strings.
-        :raises RuntimeError: If payloads were already created or if `word`
-            is already in the list of words to shorten.
-        :raises ValueError: If `word` is a single character or if `word`
-            is already short.
-        """
-        if isinstance(word, list):
-            for w in word:
-                self.add_words_to_shorten(word=w)
-            return
-        self._value_type_check(value=word, type_of_value=str)
-        if len(self.payloads) > 0:
-            error_str = (
-                "Payloads were already created"
-                "\nEnsure to add words to shorten before "
-                "adding payloads or references"
-            )
-            raise RuntimeError(error_str)
-        if word in self.words_to_shorten:
-            error_str = f"Word '{word}' already in list of words to shorten"
-            raise ValueError(error_str)
-        if len(word) < 2:
-            error_str = f"Word '{word}' is already short"
-            raise ValueError(error_str)
-        self.words_to_shorten.append(word)
-        if self.config.DEBUG_STATE:
-            print(f"'Words to shorten' list appended by: '{word}'")
-
     async def run(self, entry_dict: dict) -> dict:
-        """
-        Runs the payload and returns a dictionary containing the payload data,
-        the destination and source of the payload.
-        Use-case: If you configured Payloads with 'shorten=True' param,
-        you should ensure that 'entry_dict' is pre-shortened
-
-        :param entry_dict: A dictionary containing the payload data.
-        :type entry_dict: dict
-        :raises RuntimeError: If payloads haven't been compiled.
-        :raises TypeError: If entry_dict is not a dictionary.
-        :return: A dictionary containing the payload data, the destination
-            and source of the payload.
-        :rtype: dict
-        """
-        if not self._compiled:
-            raise RuntimeError(f"Payloads aren't compiled")
-        self._value_type_check(entry_dict, dict)
-        main_type = self._get_main_type_value(given_dict=entry_dict)
-        reference = self._find_exact_reference(
-            main_type_value=main_type, given_dict=entry_dict
+        needed_payload = await self._get_payload(entry_dict=entry_dict)
+        if not self._compiled or needed_payload == None:
+            needed_payload = self._return_error_payload()
+        full_dict = self._convert_payload_to_dict(
+            entry_payload=needed_payload, entry_dict=entry_dict
         )
-        output_keys_list = ["dst", "src"]
-        output_data_list = [reference.dst, reference.src]
+        output_keys_list = ["dst", "src", "full_dict"]
+        output_data_list = [
+            needed_payload.to_stage,
+            needed_payload.from_stage,
+            full_dict,
+        ]
         return dict(zip(output_keys_list, output_data_list))
 
-    def _shortener(self, value: str) -> str:
-        self._value_type_check(value=value, type_of_value=str)
-        if len(value) == 0:
-            error_str = f"Value '{value}' is too short already"
-            raise ValueError(error_str)
-        if self.shorten:
-            return value[0]
-        return value
+    def get_all_source_stages(self) -> List[str]:
+        source_stages = []
+        for classification in self.classes:
+            for payload in classification.payloads:
+                source_stages.append(payload.from_stage)
+        return source_stages
 
-    def _shorten_word_from_shorten_list(self, word: str) -> str:
-        self._value_type_check(value=word, type_of_value=str)
-        if self.shorten:
-            for _ in range(len(self.words_to_shorten)):
-                for word_to_shorten in self.words_to_shorten:
-                    word = word.replace(word_to_shorten, word_to_shorten[0])
-        return word
+    async def _get_payload(self, entry_dict: dict) -> Payload:
+        _, payload_main_value = list(entry_dict.items())[0]
+        needed_classification = None
+        for classification in self.classes:
+            if classification.main_value.short_item == payload_main_value:
+                needed_classification = classification
+        if needed_classification is None:
+            return self._return_error_payload()
+        needed_reference = None
+        for payload in needed_classification.payloads:
+            triggers_short_keys = [
+                trigger.key.short_item for trigger in payload.triggers
+            ]
+            data_short_keys = [key.short_item for key in payload.data]
+            entry_payload_keys = [key for key, _ in list(entry_dict.items())]
+            if len(entry_payload_keys) != 1 + len(triggers_short_keys) + len(
+                data_short_keys
+            ):
+                continue
+            failed = False
+            for key in triggers_short_keys:
+                if key not in entry_payload_keys:
+                    failed = True
+                    break
+            for key in data_short_keys:
+                if key not in entry_payload_keys:
+                    failed = True
+                    break
+            for trigger in payload.triggers:
+                if (
+                    trigger.value.short_item
+                    != entry_dict[trigger.key.short_item]
+                ):
+                    failed = True
+                    break
+            if failed:
+                continue
+            needed_reference = payload
+        if needed_reference == None:
+            return self._return_error_payload()
+        return needed_reference
 
-    def _value_type_check(self, value, type_of_value) -> None:
-        if isinstance(value, list):
-            for val in value:
-                self._value_type_check(value=val, type_of_value=type_of_value)
-            return
-        if not isinstance(value, type_of_value):
-            error_str = (
-                f"Value '{value}' has type '{type(value)}' "
-                f"instead of '{type_of_value}'"
-            )
-            raise TypeError(error_str)
-
-    def _length(self, data: str | dict) -> int:
-        data_length = len(str(data).encode())
-        if self.use_for == "vk":
-            max_length = 255
-        elif self.use_for == "tg":
-            max_length = 64
-        else:
-            max_length = 1000
-        if data_length > max_length:
-            error_str = (
-                f"Dict is too big for {self.use_for} payloads: "
-                f"{data_length}"
-            )
-            raise RuntimeError(error_str)
-        return data_length
-
-    def _parse_path(self, path: str) -> dict:
-        self._value_type_check(value=path, type_of_value=str)
-        return_dict = {}
-        added_keys = []
-        path = path.strip()
-        for num, key_and_value in enumerate(path.split("/")):
-            key, value = key_and_value.split(":")
-            if num == 0:
-                if key != self.main_type:
-                    if self.payloads != []:
-                        error_str = (
-                            f"Main key '{key}' is wrong. "
-                            f"It should be '{self.main_type}'"
-                        )
-                        raise KeyError(error_str)
-                    else:
-                        self.main_type = key
-                value = self._shortener(value=value)
-            elif len(value) > 0:
-                value = self._shorten_word_from_shorten_list(word=value)
-            elif len(value) == 0:
-                value = 0
-            key = self._shortener(value=key)
-            if key in added_keys:
-                error_str = f"Key '{key}' already added for that dict"
-                raise ValueError(error_str)
-            added_keys.append(key)
-            return_dict[key] = value
-        if self.shorten:
-            self._length(return_dict)
+    def _convert_payload_to_dict(
+        self, entry_payload: Payload, entry_dict: dict | None = None
+    ) -> dict:
+        return_dict = {
+            f"{entry_payload.main_key.item}": f"{entry_payload.main_value.item}"
+        }
+        for trigger in entry_payload.triggers:
+            return_dict[trigger.key.item] = trigger.value.item
+        for data_item in entry_payload.data:
+            if entry_dict != None:
+                return_dict[data_item.item] = entry_dict[data_item.short_item]
+            else:
+                return_dict[data_item.item] = 0
         return return_dict
 
-    def _get_type_data_from_dict(self, ref_dict: dict) -> List[TypeData]:
-        self._value_type_check(ref_dict, dict)
-        type_data = []
-        for key, value in ref_dict.items():
-            if key != self.main_type:
-                if isinstance(value, str):
-                    type_data.append(TypeData(key=key, value=value))
-        return type_data
+    def _return_error_payload(self) -> Payload:
+        return self._error_payload
 
-    def _get_data_keys_from_dict(self, ref_dict: dict) -> List[str]:
-        self._value_type_check(ref_dict, dict)
-        data_keys = []
-        for key, value in ref_dict.items():
-            if isinstance(value, int):
-                data_keys.append(key)
-        return data_keys
+    def _return_error_payload_dict(self) -> dict:
+        if self.config.DEBUG_STATE:
+            print(f"Input resulted as an error")
+        return self._convert_payload_to_dict(entry_payload=self._error_payload)
 
-    def _get_space_for_data(self, ref_dict: dict):
-        length = len(str(ref_dict).encode())
-        max_length = 1000
-        if self.use_for == "vk":
-            max_length = 255
-        elif self.use_for == "tg":
-            max_length = 64
-        return max_length - length
+    def _add_new_classification(self, main_value: ShortenedItem) -> None:
+        new_classification = Classification(
+            rules=self.rules, main_value=main_value, payloads=[]
+        )
+        self.classes.append(new_classification)
 
-    def _auto_create_payload(self, ref_dict: dict, src: str, dst: Any) -> None:
-        self._value_type_check(ref_dict, dict)
-        self._value_type_check(src, str)
-        type_data = self._get_type_data_from_dict(ref_dict=ref_dict)
-        data_keys = self._get_data_keys_from_dict(ref_dict=ref_dict)
-        space_for_data = self._get_space_for_data(ref_dict=ref_dict)
-        for key, value in ref_dict.items():
-            key = self._shortener(key)
-            if key == self._shortener(self.main_type):
-                if value in self.main_type_values:
-                    error_str = f"Main type value '{value}' already exists"
-                    raise ValueError(error_str)
-                self.main_type_values.append(value)
-                new_payload = Payload(
-                    main_type_value=value,
-                    src=src,
-                    dst=dst,
-                    space_for_data=space_for_data,
-                    type_keys_and_values=type_data,
-                    data_keys=data_keys,
-                )
-                if new_payload not in self.payloads:
-                    self.payloads.append(new_payload)
-
-    def _find_reference(self, main_type_value: str):
-        self._value_type_check(main_type_value, str)
-        for payload in self.payloads:
-            if payload.main_type_value == main_type_value:
-                return payload
-        error_str = f"Can't find reference with main type {main_type_value}"
+    def _get_classification(self, main_value: ShortenedItem) -> Classification:
+        for classification in self.classes:
+            if classification.main_value == main_value:
+                return classification
+        error_str = (
+            f"Classification with main value '{main_value}' was not found"
+        )
         raise ValueError(error_str)
 
-    def _find_exact_reference(self, main_type_value: str, given_dict: dict):
-        self._value_type_check(main_type_value, str)
-        self._value_type_check(given_dict, dict)
-        data_keys_and_values = self._get_type_data_from_dict(
-            ref_dict=given_dict
-        )
-        data_keys_list = [key.key for key in data_keys_and_values]
-        data_values_list = [key.value for key in data_keys_and_values]
-        for payload in self.payloads:
-            if payload.main_type_value == main_type_value:
-                ref_data_keys_list = []
-                ref_data_values_list = []
-                for type_keys_and_value in payload.type_keys_and_values:
-                    ref_data_keys_list.append(type_keys_and_value.key)
-                    ref_data_values_list.append(type_keys_and_value.value)
-                if (
-                    ref_data_keys_list == data_keys_list
-                    and ref_data_values_list == data_values_list
-                ):
-                    return payload
+    def _parse_payload(
+        self, payload: str
+    ) -> Tuple[ShortenedItem, List[Trigger], List[ShortenedItem]]:
+        list_of_kv = payload.strip().replace(" ", "").split("/")
+        main_value = ""
+        list_of_short_keys = []
+        list_of_triggers = []
+        list_of_data_items = []
+        for num, kv in enumerate(list_of_kv):
+            key, value = kv.split(":")
+            new_key = ShortenedItem(item=key)
+            if new_key.short_item in list_of_short_keys:
+                error_str = (
+                    f"Short key '{new_key.short_item}' already exists "
+                    f"in payload: {payload}"
+                )
+                raise ValueError(error_str)
+            list_of_short_keys.append(new_key.short_item)
+            if num == 0:
+                main_value = self._change_main_key(
+                    value=value, new_key=new_key
+                )
+                continue
+            if value == "":
+                list_of_data_items = self._add_new_data_item(
+                    key=key,
+                    list_of_data_items=list_of_data_items,
+                    payload=payload,
+                )
+            else:
+                list_of_triggers = self._add_new_trigger(
+                    key=new_key,
+                    value=value,
+                    list_of_triggers=list_of_triggers,
+                    payload=payload,
+                )
+        if main_value == "":
+            raise ValueError("Empty 'main_value' input")
+        return (main_value, list_of_triggers, list_of_data_items)
 
-        if self.error_return is None:
+    def _add_new_trigger(
+        self,
+        key: ShortenedItem,
+        value: str,
+        list_of_triggers: List[Trigger] | field(default_factory=list),
+        payload: str,
+    ) -> List[Trigger]:
+        if not self._rules_applied:
+            self._added_trigger_values_before_autoruling.append(value)
+        new_value = ShortenedRuledItem(item=value, rules=self.rules)
+        new_trigger = Trigger(rules=self.rules, key=key, value=new_value)
+        if new_trigger in list_of_triggers:
             error_str = (
-                f"Can't find reference with main type '{main_type_value}' "
-                f"similar to {given_dict}"
+                f"'{new_trigger}' already exists in " f"payload: {payload}"
             )
             raise ValueError(error_str)
-        return self.error_return
+        list_of_triggers.append(new_trigger)
+        return list_of_triggers
 
-    def _get_main_type_value(self, given_dict: dict):
-        self._value_type_check(given_dict, dict)
-        for num, key_and_value in enumerate(given_dict.items()):
-            if num == 0:
-                return key_and_value[1]
-        raise ValueError(f"Can't find main type value")
+    def _add_new_data_item(
+        self, key: str, list_of_data_items: List[ShortenedItem], payload: str
+    ) -> List[ShortenedItem]:
+        new_data_item = ShortenedItem(item=key)
+        if new_data_item in list_of_data_items:
+            error_str = (
+                f"'{new_data_item}' already exists in payload: '{payload}'"
+            )
+            raise ValueError(error_str)
+        list_of_data_items.append(new_data_item)
+        return list_of_data_items
 
-    def _add_payload(self, new_dict: dict, src: str, dst: Any) -> None:
-        self._value_type_check(new_dict, dict)
-        self._value_type_check(src, str)
-        main_type = self._get_main_type_value(given_dict=new_dict)
-        reference = self._find_reference(main_type_value=main_type)
-        ref_type_keys = [key.key for key in reference.type_keys_and_values]
-        type_keys_and_values = self._get_type_data_from_dict(ref_dict=new_dict)
-        type_keys = [key.key for key in type_keys_and_values]
-        data_keys = self._get_data_keys_from_dict(ref_dict=new_dict)
-        ref_data_keys = reference.data_keys
-        space_for_data = self._get_space_for_data(ref_dict=new_dict)
-        if ref_type_keys != type_keys:
-            error_str = (
-                f"Reference type keys aren't similar to the new dict: "
-                f"{ref_type_keys} != {type_keys}"
-            )
-            raise RuntimeError(error_str)
-        if len(data_keys) != len(ref_data_keys):
-            error_str = (
-                f"Taken not similar amount of data keys, as in the reference"
-            )
-            raise RuntimeError(error_str)
-        new_payload = Payload(
-            main_type_value=main_type,
-            src=src,
-            dst=dst,
-            space_for_data=space_for_data,
-            type_keys_and_values=type_keys_and_values,
-            data_keys=data_keys,
+    def _change_main_key(
+        self, value: str, new_key: ShortenedItem
+    ) -> ShortenedItem:
+        main_value = ShortenedItem(item=value)
+        if self._main_key_changed >= 1 and self.main_key != new_key:
+            error_str = f"'main_key' was already changed"
+            raise ValueError(error_str)
+        self._main_key_changed += 1
+        self.main_key = new_key
+        return main_value
+
+    def _set_trigger_values(self) -> None:
+        self._added_trigger_values_before_autoruling = list(
+            set(self._added_trigger_values_before_autoruling)
         )
-        if new_payload in self.payloads:
-            raise RuntimeError(f"Payload already exists")
-        self.payloads.append(new_payload)
+
+    def _split_trigger_values(self) -> None:
+        split_list = []
+        for word in self._added_trigger_values_before_autoruling:
+            for item in word.split("_"):
+                split_list.append(item)
+        self._added_trigger_values_before_autoruling = split_list
+
+    def _count_items(self) -> None:
+        self._added_trigger_values_before_autoruling = dict(
+            Counter(self._added_trigger_values_before_autoruling)
+        )
+        counted_trigger_values = {}
+        for key, value in self._added_trigger_values_before_autoruling.items():
+            counted_trigger_values[key] = value
+        self._added_trigger_values_before_autoruling = dict(
+            sorted(
+                counted_trigger_values.items(),
+                key=lambda item: (
+                    item[1],
+                    len(item[0]),
+                ),
+                reverse=True,
+            )
+        )
+
+    def _auto_add_rules(self) -> None:
+        new_rules = []
+        list_of_keys = []
+        for key, _ in self._added_trigger_values_before_autoruling.items():
+            if key[0] not in list_of_keys:
+                new_rules.append(key)
+                self._add_rule(key)
+                list_of_keys.append(key[0])
+
+    def __dict__(self) -> dict:
+        self_dict = {
+            "classes": [item.__dict__() for item in self.classes],
+            "rules_applied": self._rules_applied,
+            "compiled": self._compiled,
+        }
+        return self_dict
 
     def _payload_args_check(self, func: Coroutine) -> None:
         list_of_args = [
@@ -451,5 +603,7 @@ class Payloads:
         func_args = inspect.getfullargspec(func)[0]
         for arg in list_of_args:
             if arg not in func_args:
-                error_str = f"Payload dst should have '{arg}' arg:\n{func}"
+                error_str = (
+                    f"Payload 'to_stage' should have '{arg}' arg: {func}"
+                )
                 raise ValueError(error_str)

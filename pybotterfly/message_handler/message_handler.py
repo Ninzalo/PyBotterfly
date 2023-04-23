@@ -56,7 +56,21 @@ class MessageHandler:
             user_stage=user_stage,
             message=message_class,
         )
+        return_cls = await self._shorten_inline_buttons(return_func=return_cls)
         return return_cls
+
+    async def _shorten_inline_buttons(self, return_func: Returns) -> None:
+        if self._transitions.payloads == None:
+            return return_func
+        for return_message in return_func.returns:
+            if return_message.inline_keyboard != None:
+                for inline_button in return_message.inline_keyboard.buttons:
+                    inline_button.payload = (
+                        self._transitions.payloads.shortener(
+                            inline_button.payload
+                        )
+                    )
+        return return_func
 
     def _checks(self) -> None:
         """

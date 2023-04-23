@@ -16,6 +16,12 @@ class _Button:
         self.color: base_config.BUTTONS_COLORS = color
         self.new_line_after = new_line_after
 
+    def __str__(self) -> str:
+        return f"Button(label='{self.label}', color='{self.color}')"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 @dataclass()
 class _InlineButton:
@@ -31,6 +37,16 @@ class _InlineButton:
         self.color: base_config.BUTTONS_COLORS = color
         self.payload = payload
         self.new_line_after = new_line_after
+
+    def __str__(self) -> str:
+        return_str = (
+            f"Button(label='{self.label}', color='{self.color}', "
+            f"payload={self.payload})"
+        )
+        return return_str
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 @dataclass()
@@ -77,7 +93,7 @@ class Buttons:
         self._buttons_amount += 1
         self.buttons.append(_Button(label=label, color=color))
         if self.config.DEBUG_STATE:
-            print(f"[INFO] Added button: {self.buttons[-1]}")
+            print(f"[INFO] Added button: {str(self.buttons[-1])}")
 
     def add_line(self) -> None:
         """
@@ -182,7 +198,7 @@ class InlineButtons:
             _InlineButton(label=label, color=color, payload=payload)
         )
         if self.config.DEBUG_STATE:
-            print(f"[INFO] Added button: {self.buttons[-1]}")
+            print(f"[INFO] Added button: {str(self.buttons[-1])}")
 
     def add_line(self) -> None:
         """

@@ -1,5 +1,4 @@
 from pybotterfly.bot.returns.buttons import Buttons, InlineButtons
-
 from configs.config import BASE_CONFIG
 
 
@@ -17,11 +16,11 @@ async def second_kb() -> InlineButtons:
         label="Go to next",
         color="primary",
         payload={
-            "t": "d",
-            "a": "g_t_t_p",
-            "d": 123,
-            "p": 111,
-        },  # words 'go', 'to', 'third', 'page' are in the 'words to shorten' list
+            "type": "default",
+            "action": "go_to_third_page",
+            "data": 123,
+            "plus": 111,
+        },
     )
     keyboard.confirm()
     return keyboard

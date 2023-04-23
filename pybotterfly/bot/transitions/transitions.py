@@ -5,6 +5,7 @@ from typing import Coroutine, List
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
+from pybotterfly.bot.transitions import payloads
 from pybotterfly.bot.transitions.payloads import Payloads
 
 
@@ -161,7 +162,7 @@ class Transitions:
             )
         if message.text != None and message.payload != None:
             message.text = None
-        if message.text is not None:
+        if message.text != None:
             message.text = replace_emoji(message.text, replace="")
             stage_transitions = await self._get_transitions_by_stage(
                 stage=user_stage
@@ -179,19 +180,21 @@ class Transitions:
                 user_messenger_id, user_messenger, message.text
             )
             return answer
-        elif message.payload is not None:
-            if self.payloads is not None:
+        elif message.payload != None:
+            if self.payloads != None:
                 output = await self.payloads.run(entry_dict=message.payload)
                 if (
                     user_stage == output.get("src")
                     or output.get("src") == "any"
                 ):
                     needed_func = await output.get("dst")(
-                        user_messenger_id, user_messenger, message.payload
+                        user_messenger_id,
+                        user_messenger,
+                        output.get("full_dict"),
                     )
                     return needed_func
                 needed_func = await self.error_return(
-                    user_messenger_id, user_messenger, message.payload
+                    user_messenger_id, user_messenger, output.get("full_dict")
                 )
                 return needed_func
 
@@ -221,8 +224,7 @@ class Transitions:
             set([transition.from_stage for transition in self.transitions])
         )
         if self.payloads is not None:
-            for payload in self.payloads.payloads:
-                list_of_transitions.append(payload.src)
+            list_of_transitions += self.payloads.get_all_source_stages()
             list_of_transitions = list(set(list_of_transitions))
         return list_of_transitions
 
