@@ -22,13 +22,13 @@ payloads.add_payload(
 )
 ```
 Payload string structure description:
-`:` - separator between key and value;
-`/` - separator between different tuples of keys and values;
-`type:default` - main key : classification name. You are not allowed to change main key several times;
-`action:go_to_third_page` - 'trigger' key : 'trigger' value. 'Trigger' stands for 'item that activates FSM';
-`data:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field;
-`plus:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field.
-`type:default/action:go_to_third_page/data:/plus:` - equals to `{ 
+- `:` - separator between key and value;
+- `/` - separator between different tuples of keys and values;
+- `type:default` - main key : classification name. You are not allowed to change main key several times;
+- `action:go_to_third_page` - 'trigger' key : 'trigger' value. 'Trigger' stands for 'item that activates FSM';
+- `data:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field;
+- `plus:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field.
+- `type:default/action:go_to_third_page/data:/plus:` - equals to `{ 
     "type": "default", "action": "go_to_third_page",  # Triggers FSM
     "data": 0, "plus": 0  # Stores some data
 }`
