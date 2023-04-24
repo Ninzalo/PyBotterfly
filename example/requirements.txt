@@ -22,7 +22,7 @@ mypy-extensions==1.0.0
 packaging==23.0
 pathspec==0.11.1
 platformdirs==3.2.0
-pybotterfly @ git+https://github.com/Ninzalo/PyBotterfly.git@97057efd36260ff333caa2c9bf3b3ab447642ed6
+pybotterfly @ git+https://github.com/Ninzalo/PyBotterfly.git
 pydantic==1.10.7
 python-dotenv==1.0.0
 pytz==2023.3

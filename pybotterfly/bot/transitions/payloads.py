@@ -277,63 +277,22 @@ class Payloads(Rules):
             and payload_main_key != self.main_key.short_item
         ):
             return self._return_error_payload_dict()
-        needed_classification = None
-        for classification in self.classes:
-            if classification.main_value.item == payload_main_value:
-                needed_classification = classification
+        needed_classification = self._get_needed_classification(
+            payload_main_value=payload_main_value, short=False
+        )
         if needed_classification is None:
             return self._return_error_payload_dict()
-        payload_dict_keys = [key for key, _ in payload_dict.items()]
-        result_payload = {f"{payload_main_key[0]}": f"{payload_main_value[0]}"}
-        result_triggers = {}
-        result_data = {}
-        for payload in needed_classification.payloads:
-            amount_of_payload_triggers = len(payload.triggers)
-            amount_of_payload_data = len(payload.data)
-            if (
-                len(list(payload_dict.items()))
-                != 1 + amount_of_payload_triggers + amount_of_payload_data
-            ):
-                continue
-            for trigger in payload.triggers:
-                key = None
-                if trigger.key.item in payload_dict_keys:
-                    key = trigger.key.item
-                if trigger.key.short_item in payload_dict_keys:
-                    key = trigger.key.short_item
-                if key == None:
-                    continue
-                value = None
-                if (
-                    payload_dict[key] == trigger.value.item
-                    or payload_dict[key] == trigger.value.short_item
-                ):
-                    value = trigger.value.short_item
-                if value == None:
-                    continue
-                result_triggers[key[0]] = value
-            data_space = 0
-            for data_item in payload.data:
-                key = None
-                if data_item.item in payload_dict_keys:
-                    key = data_item.item
-                if data_item.short_item in payload_dict_keys:
-                    key = data_item.short_item
-                if key == None:
-                    continue
-                result_data[key[0]] = payload_dict[key]
-                data_space += len(str(payload_dict[key]).encode())
-            if payload.space_for_data - data_space < 0:
-                result_triggers = {}
-        if result_triggers == {}:
+        needed_payload = self._get_needed_payload(
+            classification=needed_classification, payload_dict=payload_dict
+        )
+        if needed_payload is None:
             return self._return_error_payload_dict()
-        for key, value in result_triggers.items():
-            result_payload[key] = value
-        for key, value in result_data.items():
-            result_payload[key] = value
-        if len(payload_dict_keys) != len(result_payload.items()):
-            return self._return_error_payload_dict()
-        return result_payload
+        result_dict = self._convert_payload_to_dict(
+            entry_payload=needed_payload,
+            entry_dict=payload_dict,
+            is_short=True,
+        )
+        return result_dict
 
     def add_error_payload(self, payload: str, to_stage: Coroutine):
         if self._compiled:
@@ -363,12 +322,19 @@ class Payloads(Rules):
         if self.config.DEBUG_STATE:
             print(f"\n[SUCCESS] Payloads compiled successfully\n")
 
+    def get_all_source_stages(self) -> List[str]:
+        source_stages = []
+        for classification in self.classes:
+            for payload in classification.payloads:
+                source_stages.append(payload.from_stage)
+        return source_stages
+
     async def run(self, entry_dict: dict) -> dict:
         needed_payload = await self._get_payload(entry_dict=entry_dict)
         if not self._compiled or needed_payload == None:
             needed_payload = self._return_error_payload()
         full_dict = self._convert_payload_to_dict(
-            entry_payload=needed_payload, entry_dict=entry_dict
+            entry_payload=needed_payload, entry_dict=entry_dict, is_short=False
         )
         output_keys_list = ["dst", "src", "full_dict"]
         output_data_list = [
@@ -378,68 +344,159 @@ class Payloads(Rules):
         ]
         return dict(zip(output_keys_list, output_data_list))
 
-    def get_all_source_stages(self) -> List[str]:
-        source_stages = []
-        for classification in self.classes:
-            for payload in classification.payloads:
-                source_stages.append(payload.from_stage)
-        return source_stages
+    def _get_needed_payload(
+        self, classification: Classification, payload_dict: dict
+    ) -> Payload:
+        payload_dict_keys = [key for key, _ in payload_dict.items()]
+        for payload in classification.payloads:
+            if (
+                self._validate_payload_length(
+                    payload=payload, payload_dict=payload_dict
+                )
+                and self._validate_payload_triggers(
+                    payload=payload,
+                    payload_dict=payload_dict,
+                    payload_dict_keys=payload_dict_keys,
+                )
+                and self._validate_payload_data(
+                    payload=payload,
+                    payload_dict_keys=payload_dict_keys,
+                )
+            ):
+                return payload
+        return None
+
+    def _validate_payload_data(
+        self,
+        payload: Payload,
+        payload_dict_keys: List[str],
+    ) -> bool:
+        for data_item in payload.data:
+            if (
+                data_item.item not in payload_dict_keys
+                and data_item.short_item not in payload_dict_keys
+            ):
+                return False
+        return True
+
+    def _validate_payload_triggers(
+        self,
+        payload: Payload,
+        payload_dict: dict,
+        payload_dict_keys: List[str],
+    ) -> bool:
+        for trigger in payload.triggers:
+            if (
+                trigger.key.item not in payload_dict_keys
+                and trigger.key.short_item not in payload_dict_keys
+            ):
+                return False
+            if (
+                payload_dict[trigger.key.item] != trigger.value.item
+                and payload_dict[trigger.key.item] != trigger.value.short_item
+                and payload_dict[trigger.key.short_item] != trigger.value.item
+                and payload_dict[trigger.key.short_item]
+                != trigger.value.short_item
+            ):
+                return False
+        return True
+
+    def _validate_payload_length(
+        self, payload: Payload, payload_dict: dict
+    ) -> bool:
+        if len(list(payload_dict.items())) == 1 + len(payload.triggers) + len(
+            payload.data
+        ):
+            return True
+        return False
 
     async def _get_payload(self, entry_dict: dict) -> Payload:
-        _, payload_main_value = list(entry_dict.items())[0]
-        needed_classification = None
-        for classification in self.classes:
-            if classification.main_value.short_item == payload_main_value:
-                needed_classification = classification
+        payload_main_value = self._get_payload_main_value(entry_dict)
+        needed_classification = self._get_needed_classification(
+            payload_main_value=payload_main_value, short=True
+        )
         if needed_classification is None:
             return self._return_error_payload()
-        needed_reference = None
-        for payload in needed_classification.payloads:
-            triggers_short_keys = [
-                trigger.key.short_item for trigger in payload.triggers
-            ]
-            data_short_keys = [key.short_item for key in payload.data]
-            entry_payload_keys = [key for key, _ in list(entry_dict.items())]
-            if len(entry_payload_keys) != 1 + len(triggers_short_keys) + len(
-                data_short_keys
-            ):
-                continue
-            failed = False
-            for key in triggers_short_keys:
-                if key not in entry_payload_keys:
-                    failed = True
-                    break
-            for key in data_short_keys:
-                if key not in entry_payload_keys:
-                    failed = True
-                    break
-            for trigger in payload.triggers:
-                if (
-                    trigger.value.short_item
-                    != entry_dict[trigger.key.short_item]
-                ):
-                    failed = True
-                    break
-            if failed:
-                continue
-            needed_reference = payload
-        if needed_reference == None:
+        needed_reference = self._get_needed_reference(
+            entry_dict, needed_classification
+        )
+        if needed_reference is None:
             return self._return_error_payload()
         return needed_reference
 
-    def _convert_payload_to_dict(
-        self, entry_payload: Payload, entry_dict: dict | None = None
-    ) -> dict:
-        return_dict = {
-            f"{entry_payload.main_key.item}": f"{entry_payload.main_value.item}"
-        }
-        for trigger in entry_payload.triggers:
-            return_dict[trigger.key.item] = trigger.value.item
-        for data_item in entry_payload.data:
-            if entry_dict != None:
-                return_dict[data_item.item] = entry_dict[data_item.short_item]
+    def _get_payload_main_value(self, entry_dict: dict) -> str:
+        return list(entry_dict.values())[0]
+
+    def _get_needed_classification(
+        self, payload_main_value: str, short: bool = True
+    ) -> Classification:
+        for classification in self.classes:
+            if short:
+                if classification.main_value.short_item == payload_main_value:
+                    return classification
             else:
-                return_dict[data_item.item] = 0
+                if classification.main_value.item == payload_main_value:
+                    return classification
+        return None
+
+    def _get_needed_reference(
+        self, entry_dict: dict, needed_classification: Classification
+    ) -> Payload:
+        for payload in needed_classification.payloads:
+            if self._is_valid_payload(entry_dict, payload):
+                return payload
+        return None
+
+    def _is_valid_payload(self, entry_dict: dict, payload: Payload) -> bool:
+        triggers_short_keys = [
+            trigger.key.short_item for trigger in payload.triggers
+        ]
+        data_short_keys = [key.short_item for key in payload.data]
+        entry_payload_keys = [key for key, _ in entry_dict.items()]
+        if len(entry_payload_keys) != 1 + len(triggers_short_keys) + len(
+            data_short_keys
+        ):
+            return False
+        for key in triggers_short_keys + data_short_keys:
+            if key not in entry_payload_keys:
+                return False
+        for trigger in payload.triggers:
+            if trigger.value.short_item != entry_dict[trigger.key.short_item]:
+                return False
+        return True
+
+    def _convert_payload_to_dict(
+        self,
+        entry_payload: Payload,
+        entry_dict: dict | None = None,
+        is_short: bool = False,
+    ) -> dict:
+        main_key = (
+            entry_payload.main_key.short_item
+            if is_short
+            else entry_payload.main_key.item
+        )
+        main_value = (
+            entry_payload.main_value.short_item
+            if is_short
+            else entry_payload.main_value.item
+        )
+        return_dict = {f"{main_key}": f"{main_value}"}
+        for trigger in entry_payload.triggers:
+            key = trigger.key.short_item if is_short else trigger.key.item
+            value = (
+                trigger.value.short_item if is_short else trigger.value.item
+            )
+            return_dict[key] = value
+        for data_item in entry_payload.data:
+            key = data_item.short_item if is_short else data_item.item
+            entry_dict_key = (
+                data_item.item if is_short else data_item.short_item
+            )
+            if entry_dict != None:
+                return_dict[key] = entry_dict[entry_dict_key]
+            else:
+                return_dict[key] = 0
         return return_dict
 
     def _return_error_payload(self) -> Payload:

@@ -8,44 +8,65 @@ An instance of Payloads class to add payload transitions to Finite State Machine
 from pybotterfly.bot.transitions.payloads import Payloads
 
 payloads = Payloads(
-    config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
-)
-```
-
-#### Add words to shorten
-Messengers can’t handle more than specific amount of bytes in payloads. We should compress the data of the payload with `papayloads.add_words_to_shorten` method. Not recommended to add words with the same first letter). 
-‘words’ -> ‘w’, ‘to’ -> ‘t’, ‘shorten’ -> ‘s’.
-```python
-payloads.add_words_to_shorten(
-    word=["words", "to", "shorten"] # :str | List[str]
-)
-```
-
-#### Add payload reference
-You can add payload transitions reference with `payloads.add_reference` method. This payload transition will be automatically added to the list of payload transitions
-```python
-payloads.add_reference(
-    path='type:default/action:go_to_second_page', # :str. Trigger to run an FSM
-    src=“USER_CURRENT_STAGE”, # :str. ‘Path’ will run FSM only if user is on this stage
-    dst=page_coroutine, # :Coroutine. The destination of this payload transition 
+    config=BASE_CONFIG  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
 #### Add payload
-You can add payload transitions with `payload.add_payload` method. New payload transition will be based on the existing reference
+You can add payload transitions with `payload.add_payload` method. New payload transition will be based on the existing references
 ```python
 payloads.add_payload(
-    path='type:default/action:go_to_third_page', # :str. Trigger to run an FSM based on existing references
-    src=“USER_CURRENT_STAGE”, # :str. ‘Path’ will run FSM only if user is on this stage
-    dst=page_coroutine, # :Coroutine. The destination of this payload transition 
+    payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
+    from_stage=“USER_CURRENT_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
+    to_stage=page_coroutine, # :Coroutine. The destination of this payload transition
+)
+```
+Payload string structure description:
+`:` - separator between key and value;
+`/` - separator between different tuples of keys and values;
+`type:default` - main key : classification name. You are not allowed to change main key several times;
+`action:go_to_third_page` - 'trigger' key : 'trigger' value. 'Trigger' stands for 'item that activates FSM';
+`data:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field;
+`plus:` - 'data' key : . 'data' is used for storing some data in payload (as string / integer / float value). FSM will be activated with whatever data is stored in this field.
+`type:default/action:go_to_third_page/data:/plus:` - equals to `{ 
+    "type": "default", "action": "go_to_third_page",  # Triggers FSM
+    "data": 0, "plus": 0  # Stores some data
+}`
+
+
+#### Payload transition error payload 
+You can add the error payload with `payloads.add_error_payload` method. When user's input is not added to payload transitions / user's input transition is not accessible from user's current stage
+```python
+payloads.add_error_payload(
+    payload="type:error_input",  # :str. Trigger to run an FSM based on existing references
+    to_stage=pages.error_page,  # :Coroutine. The destination of error payload transition
 )
 ```
 
-#### Payload transition error return 
-You can add the 'error_return' with `payloads.add_error_return` method. When user's input is not added to payload transitions
+#### Automatically shortens all payloads
+This method automatically generates rules for shortening payloads
 ```python
-payloads.add_error_return(
-    error_return=error_page_coroutine # :Coroutine. The destination of error payload transition 
+payloads.apply_rules()
+```
+
+Note: If your project is already running and you want to update it with the new payload transitions, you should add them after 'payloads.apply_rules()' method. Otherwise, your existing buttons can become unusable.
+Example:
+```python
+# Adding payload
+payloads.add_payload(
+    payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
+    from_stage=“USER_CURRENT_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
+    to_stage=coroutine_for_the_third_stage, # :Coroutine. The destination of this payload transition
+)
+
+# Applying rules for shortening
+payloads.apply_rules() # generates rules for shortening payloads
+
+# Adding new payloads (and applying existing rules) to the project without effect on existing ones
+payloads.add_payload(
+    payload="type:default/action:go_to_fourth_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
+    from_stage=“USER_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
+    to_stage=coroutine_for_the_fourth_stage, # :Coroutine. The destination of this payload transition
 )
 ```
 
