@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union, List
 from pybotterfly.bot.returns.message import Return
+from pybotterfly.bot.returns.buttons import Buttons, InlineButtons
 from pybotterfly.base_config import BaseConfig
 
 # Vk async library
@@ -175,35 +176,52 @@ class DefaultTgReplier:
             if inline_keyboard is not None
             else TgKeyboard(resize_keyboard=True)
         )
-        for button in buttons.buttons:
+        is_inline = True if inline_keyboard is not None else False
+        rows = await self._tg_buttons_row_builder(buttons, is_inline=is_inline)
+        for row in rows:
+            keyboard_cls.row(*row)
+        return keyboard_cls
+
+    async def _tg_buttons_row_builder(
+        self,
+        buttons: Buttons | InlineButtons,
+        is_inline: bool,
+    ) -> List[List[Union[TgKeyboardButton, TgInlineKeyboardButton]]]:
+        result_list = []
+        row_list = []
+        for num, button in enumerate(buttons.buttons):
             button_text = (
                 f"{await self._tg_color_picker(color=button.color)}"
                 f"{button.label}"
             )
-            if inline_keyboard is not None:
-                keyboard_cls.add(
+            if is_inline:
+                row_list.append(
                     TgInlineKeyboardButton(
                         button_text, callback_data=str(button.payload)
                     )
                 )
             else:
-                keyboard_cls.add(TgKeyboardButton(button_text))
+                row_list.append(TgKeyboardButton(button_text))
             if button.new_line_after:
-                keyboard_cls.row()
-        return keyboard_cls
+                result_list.append(row_list)
+                row_list = []
+            if num == len(buttons.buttons) - 1:
+                result_list.append(row_list)
+                row_list = []
+        return result_list
 
     async def _tg_color_picker(self, color: config.BUTTONS_COLORS) -> str:
         """
         Converts a button color to a corresponding emoji representing the color.
 
-        :param color: A string specifying the color of the button. Must
-            be one of:
+        :param color: A string specifying the color of the button. By default,
+            must be one of:
                 - "primary"
                 - "secondary"
                 - "positive"
                 - "negative"
         :type color: config.BUTTONS_COLORS
-        :return: A string representing the color as a Telegram emoji.
+        :return: A string representing the color as an emoji.
         :rtype: str
         """
         color_map = {
