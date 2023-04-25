@@ -56,7 +56,7 @@ Compiles the keyboard
 keyboard.confirm()  # Compiles the keyboard. You can't use keyboard without using this method
 ```
 
-[Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/lib/keyboards.py)
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/lib/keyboards.py)
 ```shell
 example/lib/keyboards.py
 ```
@@ -85,7 +85,7 @@ await return_cls.add_return(
 ```
 Note: You can add multiple returns at once
 
-[Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/lib/pages.py)
+#### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/lib/pages.py)
 ```shell
 example/lib/pages.py
 ```
