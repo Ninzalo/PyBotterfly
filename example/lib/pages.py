@@ -5,8 +5,11 @@ from lib import stages
 from lib.users import change_user_stage
 
 
+# Every page coroutine should include 'user_messenger_id', 'user_messenger', 'message' arguments
 async def first_page(
-    user_messenger_id: int, user_messenger: str, message: str
+    user_messenger_id: int,  # :int. User id to send the message
+    user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
+    message: str,  # :str. Received message from user
 ) -> Returns:
     await change_user_stage(
         new_stage=stages.General.first,
@@ -18,7 +21,7 @@ async def first_page(
     return_cls = Returns()
     await return_cls.add_return(
         user_messenger_id=user_messenger_id,  # :int. User id to send the message
-        user_messenger=user_messenger,  # :str. Represents one of the added messengers
+        user_messenger=user_messenger,  # :str. Represents one of the added messengers to which the user belongs
         text=text,  #:str. Text of the message (page)
         keyboard=keyboard,  # [Optional] :Buttons. An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
         # inline_keyboard=keyboard,  # [Optional] :InlineButtons. An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class

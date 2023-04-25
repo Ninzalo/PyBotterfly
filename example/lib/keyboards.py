@@ -19,7 +19,7 @@ async def second_kb() -> InlineButtons:
             "action": "go_to_third_page",
             "data": 123,
             "plus": 111,
-        },  # payload param is required for Inline_buttons
+        },  # payload argument is required for Inline_buttons
     )
     keyboard.confirm()
     return keyboard

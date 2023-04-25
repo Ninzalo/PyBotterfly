@@ -42,7 +42,7 @@ keyboard.add_button(
         "action": "go_to_third_page",
         "data": 123,
         "plus": 111,
-    }  # payload param is required for Inline_buttons
+    }  # payload argument is required for Inline_buttons
 )
 ```
 
@@ -66,6 +66,17 @@ example/lib/keyboards.py
 
 ## Pages creation
 
+#### Page function creation
+Every page coroutine should include `user_messenger_id`, `user_messenger`, `message` arguments
+```python
+async def page(
+    user_messenger_id: int,  # :int. User id to send the message
+    user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
+    message: str,  # :str. Received message from user
+) -> Returns:
+    ...
+```
+
 #### Instantiation of the class
 An instance of Returns class to create pages
 ```python
@@ -79,7 +90,7 @@ The answer on the user's input
 ```python
 await return_cls.add_return(
     user_messenger_id=user_messenger_id,  # :int. User id to send the message
-    user_messenger=user_messenger,  # :str. Represents one of the added messengers
+    user_messenger=user_messenger,  # :str. Represents one of the added messengers to which the user belongs
     text=text,  #:str. Text of the message (page)
     keyboard=keyboard,  # [Optional] :Buttons. An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
     # inline_keyboard=keyboard,  # [Optional] :InlineButtons. An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
