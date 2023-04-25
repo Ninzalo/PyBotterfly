@@ -28,6 +28,7 @@ You can add buttons with `keyboard.add_button` method
 keyboard.add_button(
     label="Button1",  # :str. The text of the button
     color="primary",  # :BaseConfig.BUTTONS_COLORS. The color of the button
+)
 ```
 
 #### Adding buttons (Inline buttons)
@@ -42,6 +43,7 @@ keyboard.add_button(
         "data": 123,
         "plus": 111,
     }  # payload param is required for Inline_buttons
+)
 ```
 
 #### Switching to the new line
