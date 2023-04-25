@@ -17,10 +17,11 @@ async def first_page(
     keyboard = await keyboards.first_kb()
     return_cls = Returns()
     await return_cls.add_return(
-        user_messenger_id=user_messenger_id,
-        user_messenger=user_messenger,
-        text=text,
-        keyboard=keyboard,
+        user_messenger_id=user_messenger_id,  # :int. User id to send the message
+        user_messenger=user_messenger,  # :str. Represents one of the added messengers
+        text=text,  #:str. Text of the message (page)
+        keyboard=keyboard,  # [Optional] :Buttons. An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
+        # inline_keyboard=keyboard,  # [Optional] :InlineButtons. An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
     )
     return return_cls
 

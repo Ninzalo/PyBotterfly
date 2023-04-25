@@ -15,3 +15,7 @@ pip install git+https://github.com/Ninzalo/PyBotterfly.git
 ## Configuration documentation
 
 - [Configuration](https://github.com/Ninzalo/PyBotterfly/blob/master/docs/configuration.md)
+
+## Reply creation documentation
+
+- [Docs](https://github.com/Ninzalo/PyBotterfly/blob/master/docs/reply.md)

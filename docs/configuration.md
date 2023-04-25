@@ -205,6 +205,7 @@ BASE_CONFIG.DEBUG_STATE: bool = True  # =True is recommended while setting up th
 example/configs/config.py
 ```
 
+
 ## Scripts to run
 
 #### Server
