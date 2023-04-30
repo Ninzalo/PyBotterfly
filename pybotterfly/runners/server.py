@@ -35,36 +35,39 @@ class Server:
         writer: asyncio.streams.StreamWriter,
     ) -> None:
         tasks = []
+        byte_array = bytearray()
         while True:
             data = await reader.read()
             if not data:
                 break
-            message = pickle.loads(data)
-            message_cls = dataclass_from_dict(
-                struct=MessageStruct, dictionary=message
-            )
-            addr = writer.get_extra_info("peername")
-            print(f"Received {message_cls!r} from {addr!r}")
+            byte_array.extend(data)
+        if byte_array == bytearray():
             if self._config.DEBUG_STATE:
-                print(f"Fetching {message_cls} started at {datetime.now()}")
-            return_cls = await self._message_handler.get(
-                message_class=message_cls
-            )
+                print("Received empty byte array")
+            return
+        message = pickle.loads(byte_array)
+        message_cls = dataclass_from_dict(
+            struct=MessageStruct, dictionary=message
+        )
+        addr = writer.get_extra_info("peername")
+        print(f"Received {message_cls!r} from {addr!r}")
+        if self._config.DEBUG_STATE:
+            print(f"Fetching {message_cls} started at {datetime.now()}")
+        return_cls = await self._message_handler.get(message_class=message_cls)
+        if self._config.DEBUG_STATE:
+            print(f"Fetching {message_cls} finished at {datetime.now()}")
+        if not return_cls:
             if self._config.DEBUG_STATE:
-                print(f"Fetching {message_cls} finished at {datetime.now()}")
-            if not return_cls:
-                if self._config.DEBUG_STATE:
-                    print(
-                        f"An incorrect request resulted in an error. "
-                        f"Request skipped. "
-                        f"Return_cls: {return_cls}"
-                    )
-                break
-            for return_message in return_cls.returns:
-                task = asyncio.create_task(
-                    self.replier(return_message=return_message)
+                print(
+                    f"An incorrect request resulted in an error. "
+                    f"Request skipped. Return_cls: {return_cls}"
                 )
-                tasks.append(task)
+            return
+        for return_message in return_cls.returns:
+            task = asyncio.create_task(
+                self.replier(return_message=return_message)
+            )
+            tasks.append(task)
         await asyncio.gather(*tasks)
         writer.close()
 
