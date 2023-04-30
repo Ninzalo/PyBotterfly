@@ -50,12 +50,13 @@ class Server:
             struct=MessageStruct, dictionary=message
         )
         addr = writer.get_extra_info("peername")
-        print(f"Received {message_cls!r} from {addr!r}")
+        receive_time = datetime.now()
+        print(f"[{receive_time}] Received {message_cls!r} from {addr!r}")
         if self._config.DEBUG_STATE:
-            print(f"Fetching {message_cls} started at {datetime.now()}")
+            print(f"[{receive_time}] Fetching {message_cls} started")
         return_cls = await self._message_handler.get(message_class=message_cls)
         if self._config.DEBUG_STATE:
-            print(f"Fetching {message_cls} finished at {datetime.now()}")
+            print(f"[{datetime.now()}] Fetching {message_cls} finished")
         if not return_cls:
             if self._config.DEBUG_STATE:
                 print(
