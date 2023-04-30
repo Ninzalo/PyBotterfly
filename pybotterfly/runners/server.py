@@ -60,22 +60,22 @@ class Server:
                         f"Return_cls: {return_cls}"
                     )
                 break
-            for answer in return_cls.returns:
-                task = asyncio.create_task(self.replier(answer))
+            for return_message in return_cls.returns:
+                task = asyncio.create_task(
+                    self.replier(return_message=return_message)
+                )
                 tasks.append(task)
         await asyncio.gather(*tasks)
         writer.close()
 
-    async def replier(self, return_cls: Return):
-        await self._messengers.get_func(
-            messenger=return_cls.user_messenger, return_cls=return_cls
-        )
+    async def replier(self, return_message: Return):
+        await self._messengers.get_func(return_message=return_message)
         if self._config.DEBUG_STATE:
             request = (
                 f"{'='*10}"
                 f"\nTime: {datetime.now()}"
-                f"\nUser_id: {return_cls.user_messenger_id}"
-                f"\nMessage: {return_cls}"
+                f"\nUser_id: {return_message.user_messenger_id}"
+                f"\nMessage: {return_message}"
                 f"\n{'='*10}"
             )
             print(request)

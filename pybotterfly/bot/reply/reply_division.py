@@ -126,28 +126,28 @@ class MessengersDivision:
         if not self._compiled:
             self._compiled = True
 
-    async def get_func(
-        self, messenger: BaseConfig.ADDED_MESSENGERS, return_cls: Return
-    ) -> None:
+    async def get_func(self, return_message: Return) -> None:
         """
         If the list of `_Messenger` objects has been compiled, this method
         finds the existing `_Messenger` object that corresponds to the
         specified `messenger` and makes an asynchronous query to it using
-        the specified `return_cls`. If no matching `_Messenger` object is
+        the specified `return_message`. If no matching `_Messenger` object is
         found, an error message is printed.
 
-        :param messenger: The messenger platform to query.
-        :type messenger: BaseConfig.ADDED_MESSENGERS
-        :param return_cls: The return type for the query.
-        :type return_cls: Return
+        :param return_message: The return type for the query.
+        :type return_message: Return
         """
 
-        if self._compiled:
-            for existing_messenger in self._messengers_to_answer:
-                if existing_messenger.trigger == messenger:
-                    await existing_messenger._throttler.query(return_cls)
-                    return
-            error_str = (
-                f"[ERROR] Needed messenger '{messenger}' wasn't registered"
-            )
+        if not self._compiled:
+            error_str = f"[ERROR] Messengers are not compiled"
             print(error_str)
+            return
+        for existing_messenger in self._messengers_to_answer:
+            if existing_messenger.trigger == return_message.user_messenger:
+                await existing_messenger._throttler.query(return_message)
+                return
+        error_str = (
+            f"[ERROR] Needed messenger "
+            f"'{return_message.user_messenger}' wasn't registered"
+        )
+        print(error_str)
