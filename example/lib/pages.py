@@ -9,7 +9,7 @@ from lib.users import change_user_stage
 async def first_page(
     user_messenger_id: int,  # :int. User id to send the message
     user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
-    message: str,  # :str. Received message from user
+    message: str | dict,  # :str | dict. Received message | payload from user
 ) -> Returns:
     await change_user_stage(
         new_stage=stages.General.first,
@@ -30,7 +30,7 @@ async def first_page(
 
 
 async def second_page(
-    user_messenger_id: int, user_messenger: str, message: str
+    user_messenger_id: int, user_messenger: str, message: str | dict
 ) -> Returns:
     await change_user_stage(
         new_stage=stages.General.second,
@@ -50,7 +50,7 @@ async def second_page(
 
 
 async def third_page(
-    user_messenger_id: int, user_messenger: str, message: str
+    user_messenger_id: int, user_messenger: str, message: str | dict
 ) -> Returns:
     await change_user_stage(
         new_stage=stages.General.third,
@@ -70,7 +70,7 @@ async def third_page(
 
 
 async def error_page(
-    user_messenger_id: int, user_messenger: str, message: str
+    user_messenger_id: int, user_messenger: str, message: str | dict
 ) -> Returns:
     text = await texts.error_return(message=message)
     return_cls = Returns()

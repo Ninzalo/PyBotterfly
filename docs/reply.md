@@ -72,7 +72,7 @@ Every page coroutine should include `user_messenger_id`, `user_messenger`, `mess
 async def page(
     user_messenger_id: int,  # :int. User id to send the message
     user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
-    message: str,  # :str. Received message from user
+    message: str | dict,  # :str | dict. Received message | payload from user
 ) -> Returns:
     ...
 ```
