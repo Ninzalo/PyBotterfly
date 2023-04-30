@@ -231,6 +231,8 @@ class Transitions:
     def _add_none_transition_to_all_stages(self) -> int:
         added_none_transitions = 0
         for stage in self._get_all_source_stages():
+            if stage == 'any':
+                continue
             if not self._check_none_transition_by_stage(stage=stage):
                 self.add_transition(
                     trigger=None, src=stage, dst=self.error_return
