@@ -52,7 +52,7 @@ This method automatically generates rules for shortening payloads
 payloads.apply_rules()
 ```
 
-Note: If your project is already running and you want to update it with the new payload transitions, you should add them after 'payloads.apply_rules()' method. Otherwise, your existing buttons can become unusable.
+Note: If your project is already running and you want to update it with the new payload transitions, you should add them after 'payloads.apply_rules()' method. Otherwise, your existing inline buttons can become unusable.
 Example:
 ```python
 # Adding payload
@@ -70,6 +70,15 @@ payloads.add_payload(
     payload="type:default/action:go_to_fourth_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
     from_stage=“USER_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
     to_stage=coroutine_for_the_fourth_stage, # :Coroutine. The destination of this payload transition
+)
+```
+
+#### Safely removing existing payload transitions
+Note: If you will delete the line of code with unnecessary payload, your existing payloads will be automatically reconfigurated with other shortening rules. Your existing inline buttons may become unusable.
+You can safely remove existing payloads with `payloads.remove_payload` method without any effect on existing shortening rules
+```python
+payloads.remove_payload(
+    payload="type:fake/id:"  # :str. Trigger to run an FSM based on existing references
 )
 ```
 

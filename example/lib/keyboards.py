@@ -21,6 +21,15 @@ async def second_kb() -> InlineButtons:
             "plus": 111,
         },  # payload argument is required for Inline_buttons
     )
+    # adding button that we removed in configuration
+    keyboard.add_button(
+        label="Deleted button",
+        color="negative",
+        payload={
+            "type": "fake",
+            "id": "integer",
+        },  # payload argument is required for Inline_buttons
+    )
     keyboard.confirm()
     return keyboard
 

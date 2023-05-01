@@ -211,6 +211,32 @@ class Payloads(Rules):
         self._added_trigger_values_before_autoruling = []
         self._added_payloads_before_autoruling = []
 
+    def remove_payload(self, payload: str) -> None:
+        if self._compiled:
+            error_str = f"Payloads are already compiled"
+            raise RuntimeError(error_str)
+        main_value, list_of_triggers, list_of_data_items = self._parse_payload(
+            payload=payload
+        )
+        if main_value not in [
+            classification.main_value for classification in self.classes
+        ]:
+            error_str = f"Payload '{payload}' not found"
+            raise ValueError(error_str)
+        classification = self._get_classification(main_value=main_value)
+        for num, existing_payload in enumerate(classification.payloads):
+            if (
+                main_value == existing_payload.main_value
+                and list_of_triggers == existing_payload.triggers
+                and list_of_data_items == existing_payload.data
+            ):
+                if self.config.DEBUG_STATE:
+                    print(f"Removed payload: '{payload}'")
+                classification.payloads.pop(num)
+                return
+        error_str = f"Payload '{payload}' not found"
+        raise ValueError(error_str)
+
     def add_payload(
         self, payload: str, from_stage: str, to_stage: Coroutine
     ) -> Payload:
@@ -392,10 +418,12 @@ class Payloads(Rules):
             ):
                 return False
             if (
-                payload_dict[trigger.key.item] != trigger.value.item
-                and payload_dict[trigger.key.item] != trigger.value.short_item
-                and payload_dict[trigger.key.short_item] != trigger.value.item
-                and payload_dict[trigger.key.short_item]
+                payload_dict.get(trigger.key.item) != trigger.value.item
+                and payload_dict.get(trigger.key.item)
+                != trigger.value.short_item
+                and payload_dict.get(trigger.key.short_item)
+                != trigger.value.item
+                and payload_dict.get(trigger.key.short_item)
                 != trigger.value.short_item
             ):
                 return False
@@ -461,7 +489,9 @@ class Payloads(Rules):
             if key not in entry_payload_keys:
                 return False
         for trigger in payload.triggers:
-            if trigger.value.short_item != entry_dict[trigger.key.short_item]:
+            if trigger.value.short_item != entry_dict.get(
+                trigger.key.short_item
+            ):
                 return False
         return True
 
@@ -494,7 +524,7 @@ class Payloads(Rules):
                 data_item.item if is_short else data_item.short_item
             )
             if entry_dict != None:
-                return_dict[key] = entry_dict[entry_dict_key]
+                return_dict[key] = entry_dict.get(entry_dict_key)
             else:
                 return_dict[key] = 0
         return return_dict

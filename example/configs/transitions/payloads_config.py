@@ -15,6 +15,13 @@ payloads.add_payload(
     to_stage=pages.third_page,  # :Coroutine. The destination of this payload transition
 )
 
+# adding payload for removing it later
+payloads.add_payload(
+    payload="type:fake/id:",  # :str. Trigger to run an FSM based on existing references
+    from_stage=General.second,  # :str. ‘Path’ will run FSM only if user is on this stage
+    to_stage=pages.third_page,  # :Coroutine. The destination of this payload transition
+)
+
 # adding the error payload. When user's input is not added to 'payloads'
 payloads.add_error_payload(
     payload="type:error_input",  # :str. Trigger to run an FSM based on existing references
@@ -23,6 +30,11 @@ payloads.add_error_payload(
 
 # automatically shortens all payloads
 payloads.apply_rules()
+
+# safely removes payload without any effect on existing shortening rules
+payloads.remove_payload(
+    payload="type:fake/id:"  # :str. Trigger to run an FSM based on existing references
+)
 
 # compiles payloads
 payloads.compile()
