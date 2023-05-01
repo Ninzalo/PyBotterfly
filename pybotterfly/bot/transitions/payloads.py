@@ -195,8 +195,18 @@ class Payloads(Rules):
         super().__init__()
 
     def apply_rules(self) -> None:
+        """
+        Applies shortening rules to the payloads of the Payloads FSM,
+        modifying its properties.
+
+        :raises RuntimeError: If the rules are already applied
+
+        :return: None
+        :rtype: NoneType
+        """
+
         if self._rules_applied:
-            raise RuntimeError("Rules already applied")
+            raise RuntimeError("The rules are already being applied")
         self._rules_applied = True
         self.classes = []
         self.main_key = ShortenedItem(item="type")
@@ -212,9 +222,22 @@ class Payloads(Rules):
         self._added_payloads_before_autoruling = []
 
     def remove_payload(self, payload: str) -> None:
+        """
+        Removes a payload from the Payloads FSM.
+
+        :param payload: A string representing the payload to be removed.
+        :type payload: str
+
+        :raises RuntimeError: If payloads have already been compiled.
+
+        :raises ValueError: If the specified payload is not found.
+
+        :return: None
+        :rtype: NoneType
+        """
+
         if self._compiled:
-            error_str = f"Payloads are already compiled"
-            raise RuntimeError(error_str)
+            raise RuntimeError("Payloads have already been compiled")
         main_value, list_of_triggers, list_of_data_items = self._parse_payload(
             payload=payload
         )
@@ -240,6 +263,28 @@ class Payloads(Rules):
     def add_payload(
         self, payload: str, from_stage: str, to_stage: Coroutine
     ) -> Payload:
+        """
+        Adds a new payload to the Payloads FSM.
+
+        :param payload: A string representing the payload to be added.
+        :type payload: str
+
+        :param from_stage: A string representing the source stage of the payload.
+        :type from_stage: str
+
+        :param to_stage: A coroutine representing the destination stage of
+            the payload.
+        :type to_stage: Coroutine
+
+        :return: A `Payload` instance representing the newly added payload.
+        :rtype: Payload
+
+        :raises ValueError: If the specified payload already exists, or if
+            the length of the new payload is not similar to existing payloads
+            in the same classification, or if the short main value of the
+            payload already exists.
+        """
+
         self._payload_args_check(func=to_stage)
         if not self._rules_applied:
             self._added_payloads_before_autoruling.append(
@@ -295,6 +340,20 @@ class Payloads(Rules):
         return new_payload
 
     def shortener(self, payload_dict: dict) -> dict:
+        """
+        Shortens the payload in the given payload dictionary.
+
+        :param payload_dict: A dictionary containing the payload to be shortened.
+        :type payload_dict: dict
+
+        :return: A dictionary containing the shortened payload.
+        :rtype: dict
+
+        :raises RuntimeError: If payloads have not been compiled.
+
+        :raises ValueError: If the specified payload key is not valid.
+        """
+
         if not self._compiled:
             return payload_dict
         payload_main_key, payload_main_value = list(payload_dict.items())[0]
@@ -321,10 +380,27 @@ class Payloads(Rules):
         return result_dict
 
     def add_error_payload(self, payload: str, to_stage: Coroutine):
+        """
+        Adds an error payload with transition to the specified coroutine stage.
+
+        :param payload: A string representing the payload to be added as
+            an error payload.
+        :type payload: str
+
+        :param to_stage: A coroutine stage to which the user should be transfered.
+        :type to_stage: Coroutine
+
+        :return: The added error payload.
+        :rtype: Payload
+
+        :raises RuntimeError: If payloads have already been compiled or if
+            the error payload has already been added.
+        """
+
         if self._compiled:
-            raise RuntimeError("Payloads already compiled")
+            raise RuntimeError("Payloads have already been compiled")
         if self._error_payload != None:
-            raise RuntimeError("Error payload already added")
+            raise RuntimeError("The error payload has already been added")
         error_payload = self.add_payload(
             payload=payload, from_stage="any", to_stage=to_stage
         )
@@ -333,6 +409,18 @@ class Payloads(Rules):
             print(f"Added error payload: '{payload}'")
 
     def compile(self) -> None:
+        """
+        Compiles the payloads added to the current instance of the class.
+
+        :return: None
+        :rtype: NoneType
+
+        :raises RuntimeError:
+            - If no payloads have been added.
+            - If no error payload has been added before compiling.
+            - If the payloads have already been compiled.
+        """
+
         if self.classes == []:
             error_str = f"Failed to compile payloads. No payloads added"
             raise RuntimeError(error_str)
@@ -343,12 +431,21 @@ class Payloads(Rules):
             )
             raise RuntimeError(error_str)
         if self._compiled:
-            raise RuntimeError("Payloads already compiled")
+            raise RuntimeError("Payloads have already been compiled")
         self._compiled = True
         if self.config.DEBUG_STATE:
             print(f"\n[SUCCESS] Payloads compiled successfully\n")
 
     def get_all_source_stages(self) -> List[str]:
+        """
+        Returns a list of all source stages for the payloads added to the
+            current instance of the class.
+
+        :return: A list of strings representing the source stages of the
+            payloads.
+        :rtype: List[str]
+        """
+
         source_stages = []
         for classification in self.classes:
             for payload in classification.payloads:
@@ -356,6 +453,23 @@ class Payloads(Rules):
         return source_stages
 
     async def run(self, entry_dict: dict) -> dict:
+        """
+        Runs the Payloads FSM on the given entry dictionary and returns a
+        dictionary containing the necessary data.
+
+        :param entry_dict: A dictionary representing the input data.
+        :type entry_dict: dict
+
+        :return: A dictionary with the following keys:
+            - dst: The stage where the user should be transfered.
+            - src: The stage where the payload is coming from.
+            - full_dict: The dictionary containing the data processed by the
+                payload.
+        :rtype: dict
+        """
+
+        if not isinstance(entry_dict, dict):
+            return self._return_error_payload_dict()
         needed_payload = await self._get_payload(entry_dict=entry_dict)
         if not self._compiled or needed_payload == None:
             needed_payload = self._return_error_payload()
