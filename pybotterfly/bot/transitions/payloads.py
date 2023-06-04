@@ -35,6 +35,12 @@ class ShortenedRuledItem(ShortenedItem):
         split_item = self.item.split("_")
         new_short_item = ""
         for num, word in enumerate(split_item):
+            if len(word) < 2:
+                error_str = (
+                    f"Word '{word}' is already too short for "
+                    "payload shortening. Reconfigure your Payloads"
+                )
+                raise ValueError(error_str)
             adding_word = word
             for rule in self.rules:
                 if word == rule.item:
