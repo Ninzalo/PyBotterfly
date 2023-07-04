@@ -4,8 +4,6 @@ from collections import Counter
 from typing import Coroutine, List, Tuple, Union, Dict, Any
 from pybotterfly.base_config import BaseConfig
 
-# from pybotterfly.bot.transitions.schedule import ScheduledJob
-
 
 @dataclass()
 class ShortenedItem:
@@ -33,8 +31,9 @@ class ShortenedRuledItem(ShortenedItem):
     def __post_init__(self) -> None:
         self.short_item = self.item
         split_item = self.item.split("_")
+        short_item_list = []
         new_short_item = ""
-        for num, word in enumerate(split_item):
+        for word in split_item:
             if len(word) < 2:
                 error_str = (
                     f"Word '{word}' is already too short for "
@@ -45,10 +44,9 @@ class ShortenedRuledItem(ShortenedItem):
             for rule in self.rules:
                 if word == rule.item:
                     adding_word = rule.short_item
-            if num != len(split_item) - 1:
-                new_short_item += "".join(f"{adding_word}_")
-            else:
-                new_short_item += "".join(f"{adding_word}")
+            if not adding_word == "":
+                short_item_list.append(f"{adding_word}")
+        new_short_item = "_".join(short_item_list)
         if new_short_item == "":
             new_short_item = self.item
         self.short_item = new_short_item
@@ -81,8 +79,11 @@ class Payload:
     rules: List[ShortenedItem]
     triggers: List[Trigger]
     data: List[ShortenedItem]
-    from_stage: str
     to_stage: Coroutine
+    from_stage: str = "any"
+    to_stage_id: str | None = None
+    access_level: List[str] = field(default_factory=["any"])
+    to_access_level: str | None = None
 
     def __post_init__(self) -> None:
         self.space_for_data = self.get_space_for_data()
@@ -91,7 +92,7 @@ class Payload:
         return_str = (
             f"{self.__class__.__name__}(triggers={self.triggers}, "
             f"data={self.data}, from_stage={self.from_stage}, "
-            f"to_stage={self.to_stage})"
+            f"to_stage={self.to_stage}, to_stage_id={self.to_stage_id})"
         )
         return return_str
 
@@ -196,7 +197,9 @@ class Payloads(Rules):
         self._added_trigger_values_before_autoruling: Union[
             Dict[Any, Any], List[Any]
         ] = []
-        self._added_payloads_before_autoruling: Tuple[str, str, Coroutine] = []
+        self._added_payloads_before_autoruling: Tuple[
+            str, Coroutine, str | int, str | int, str | int, str | int
+        ] = []
         self._rules_applied: bool = False
         super().__init__()
 
@@ -222,8 +225,22 @@ class Payloads(Rules):
         self._split_trigger_values()
         self._count_items()
         self._auto_add_rules()
-        for payload, src, dst in self._added_payloads_before_autoruling:
-            self.add_payload(payload=payload, from_stage=src, to_stage=dst)
+        for (
+            payload,
+            to_stage,
+            to_stage_id,
+            from_stage,
+            access_level,
+            to_access_level,
+        ) in self._added_payloads_before_autoruling:
+            self.add_payload(
+                payload=payload,
+                to_stage=to_stage,
+                to_stage_id=to_stage_id,
+                from_stage=from_stage,
+                access_level=access_level,
+                to_access_level=to_access_level,
+            )
         self._added_trigger_values_before_autoruling = []
         self._added_payloads_before_autoruling = []
 
@@ -267,7 +284,13 @@ class Payloads(Rules):
         raise ValueError(error_str)
 
     def add_payload(
-        self, payload: str, from_stage: str, to_stage: Coroutine
+        self,
+        payload: str,
+        to_stage: Coroutine,
+        to_stage_id: str | None = None,
+        from_stage: str = "any",
+        access_level: str | List[str] = "any",
+        to_access_level: str | None = None,
     ) -> Payload:
         """
         Adds a new payload to the Payloads FSM.
@@ -282,6 +305,9 @@ class Payloads(Rules):
             the payload.
         :type to_stage: Coroutine
 
+        :param to_stage_id: A string representing the ID of the destination
+        :type to_stage_id: str | None
+
         :return: A `Payload` instance representing the newly added payload.
         :rtype: Payload
 
@@ -292,9 +318,19 @@ class Payloads(Rules):
         """
 
         self._payload_args_check(func=to_stage)
+        validated_access_level = (
+            [access_level] if isinstance(access_level, str) else access_level
+        )
         if not self._rules_applied:
             self._added_payloads_before_autoruling.append(
-                (payload, from_stage, to_stage)
+                (
+                    payload,
+                    to_stage,
+                    to_stage_id,
+                    from_stage,
+                    validated_access_level,
+                    to_access_level,
+                )
             )
         main_value, list_of_triggers, list_of_data_items = self._parse_payload(
             payload=payload
@@ -307,6 +343,9 @@ class Payloads(Rules):
             data=list_of_data_items,
             from_stage=from_stage,
             to_stage=to_stage,
+            to_stage_id=to_stage_id,
+            access_level=validated_access_level,
+            to_access_level=to_access_level,
         )
         if main_value not in [
             classification.main_value for classification in self.classes
@@ -371,12 +410,12 @@ class Payloads(Rules):
         needed_classification = self._get_needed_classification(
             payload_main_value=payload_main_value, short=False
         )
-        if needed_classification is None:
+        if needed_classification == None:
             return self._return_error_payload_dict()
         needed_payload = self._get_needed_payload(
             classification=needed_classification, payload_dict=payload_dict
         )
-        if needed_payload is None:
+        if needed_payload == None:
             return self._return_error_payload_dict()
         result_dict = self._convert_payload_to_dict(
             entry_payload=needed_payload,
@@ -455,10 +494,16 @@ class Payloads(Rules):
         source_stages = []
         for classification in self.classes:
             for payload in classification.payloads:
+                if payload.from_stage == "any":
+                    continue
                 source_stages.append(payload.from_stage)
+                if payload.to_stage_id != None:
+                    source_stages.append(payload.to_stage_id)
         return source_stages
 
-    async def run(self, entry_dict: dict) -> dict:
+    async def run(
+        self, entry_dict: dict, user_access_level: str, user_stage: str
+    ) -> dict:
         """
         Runs the Payloads FSM on the given entry dictionary and returns a
         dictionary containing the necessary data.
@@ -466,26 +511,61 @@ class Payloads(Rules):
         :param entry_dict: A dictionary representing the input data.
         :type entry_dict: dict
 
+        :param access_level: The access level of the user.
+        :type access_level: str
+
+        :param user_stage: User's current stage.
+        :type user_stage: str
+
         :return: A dictionary with the following keys:
             - dst: The stage where the user should be transfered.
             - src: The stage where the payload is coming from.
             - full_dict: The dictionary containing the data processed by the
                 payload.
+            - to_stage_id: The ID of the destination stage.
+            - to_access_level: The access level of the destination stage.
         :rtype: dict
         """
 
         if not isinstance(entry_dict, dict):
-            return self._return_error_payload_dict()
+            needed_payload = self._return_error_payload()
+            return self._return_payload_dict(
+                payload=needed_payload,
+                entry_dict=self._return_error_payload_dict(),
+            )
         needed_payload = await self._get_payload(entry_dict=entry_dict)
+        if not (
+            user_access_level in needed_payload.access_level
+            or needed_payload.access_level == ["any"]
+        ):
+            needed_payload = self._return_error_payload()
+        if not (
+            needed_payload.from_stage == user_stage
+            or needed_payload.from_stage == "any"
+        ):
+            needed_payload = self._return_error_payload()
         if not self._compiled or needed_payload == None:
             needed_payload = self._return_error_payload()
-        full_dict = self._convert_payload_to_dict(
-            entry_payload=needed_payload, entry_dict=entry_dict, is_short=False
+        return self._return_payload_dict(
+            payload=needed_payload, entry_dict=entry_dict
         )
-        output_keys_list = ["dst", "src", "full_dict"]
+
+    def _return_payload_dict(self, payload: Payload, entry_dict: dict) -> dict:
+        full_dict = self._convert_payload_to_dict(
+            entry_payload=payload, entry_dict=entry_dict, is_short=False
+        )
+        output_keys_list = [
+            "dst",
+            "src",
+            "to_stage_id",
+            "to_access_level",
+            "full_dict",
+        ]
         output_data_list = [
-            needed_payload.to_stage,
-            needed_payload.from_stage,
+            payload.to_stage,
+            payload.from_stage,
+            payload.to_stage_id,
+            payload.to_access_level,
             full_dict,
         ]
         return dict(zip(output_keys_list, output_data_list))

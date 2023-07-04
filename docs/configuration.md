@@ -8,7 +8,7 @@ An instance of Payloads class to add payload transitions to Finite State Machine
 from pybotterfly.bot.transitions.payloads import Payloads
 
 payloads = Payloads(
-    config=BASE_CONFIG  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -17,8 +17,11 @@ You can add payload transitions with `payload.add_payload` method. New payload t
 ```python
 payloads.add_payload(
     payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
-    from_stage=“USER_CURRENT_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
-    to_stage=page_coroutine, # :Coroutine. The destination of this payload transition
+    to_stage=page_coroutine,  # :Coroutine. The destination of this payload transition
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
+    from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
 ```
 Payload string structure description:
@@ -58,8 +61,11 @@ Example:
 # Adding payload
 payloads.add_payload(
     payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
-    from_stage=“USER_CURRENT_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
-    to_stage=coroutine_for_the_third_stage, # :Coroutine. The destination of this payload transition
+    to_stage=third_page_coroutine,  # :Coroutine. The destination of this payload transition
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
+    from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
 
 # Applying rules for shortening
@@ -67,9 +73,11 @@ payloads.apply_rules() # generates rules for shortening payloads
 
 # Adding new payloads (and applying existing rules) to the project without effect on existing ones
 payloads.add_payload(
-    payload="type:default/action:go_to_fourth_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
-    from_stage=“USER_STAGE”,  # :str. ‘Path’ will run FSM only if user is on this stage
-    to_stage=coroutine_for_the_fourth_stage, # :Coroutine. The destination of this payload transition
+    to_stage=fourth_page_coroutine,  # :Coroutine. The destination of this payload transition
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
+    from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
 ```
 
@@ -85,7 +93,7 @@ payloads.remove_payload(
 #### Payload transitions compilation
 This will make payload transitions be available in the FSM
 ```python
-transitions.compile()
+payloads.compile()
 ```
 
 #### [Example usage](https://github.com/Ninzalo/PyBotterfly/blob/master/example/configs/transitions/payloads_config.py)
@@ -102,8 +110,8 @@ An instance of Transitions class to add transitions to Finite State Machine
 from pybotterfly.bot.transitions.transitions import Transitions
 
 transitions = Transitions(
-    payloads=payloads, # Payload transitions of Payloads class
-    config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    payloads=payloads,  # Payload transitions of Payloads class
 )
 ```
 
@@ -111,9 +119,12 @@ transitions = Transitions(
 You can add transitions with `transitions.add_transition` method
 ```python
 transitions.add_transition(
-    trigger="start", # :str. Trigger to run an FSM
-    src=“USER_CURRENT_STAGE”, # :str. ‘Trigger’ will run FSM only if user is on this stage
-    dst=page_coroutine, # :Coroutine. The destination of this transition 
+    trigger="/start",  # : str. Is a default start input for TG. Trigger to run an FSM
+    from_stage="USER_CURRENT_STAGE",  # :str. ‘Trigger’ will run FSM only if user is on this stage
+    to_stage=page_coroutine,  # :Coroutine. The destination of this transition
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
+    access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
 ```
 
@@ -145,9 +156,12 @@ example/configs/transitions/transitions_config.py
 from pybotterfly.message_handler.message_handler import MessageHandler
 
 message_handler = MessageHandler(
-    user_stage_getter=get_user_stage_func, # :Coroutine. Function to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
-    transitions=transitions, # Transitions of Transitions class
-    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    transitions=transitions,  # Transitions of Transitions class
+    user_stage_getter=get_user_stage_coroutine,  # :Coroutine. Function to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
+    user_stage_changer=user_stage_changer_coroutine,  # :Coroutine. Function to change user’s stage. Should contain 'to_stage_id', ‘user_messenger_id’ and ‘user_messenger’ args.
+    user_access_level_getter=user_access_level_getter_coroutine,  # :Coroutine. [Optional] Function to get user’s access level. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
+    user_access_level_changer=user_access_level_changer_coroutine,  # :Coroutine. [Optional] Function to change user’s access level. Should contain 'tu_access_level', ‘user_messenger_id’ and ‘user_messenger’ args.
+    base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -164,7 +178,7 @@ An instance of MessengersDivision class to divide messages for different messeng
 from pybotterfly.bot.reply.reply_division import MessengersDivision
 
 messengers = MessengersDivision(
-    config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -176,7 +190,7 @@ messengers.register_messenger(
     reply_func=DefaultTgReplier(
         tg_bot=bot, # An instance of preconfigured TG Bot
         config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
-    ).tg_answer, # : Coroutine. A function that sends message to the user
+    ).tg_answer, # :Coroutine. A function that sends message to the user
     messages_per_second=4, # :int. Message reply rate in messages per second
 )
 ```
@@ -220,7 +234,7 @@ example/configs/config.py
 #### Server
 Build your backend server
 ```python
-from pybotterfly.runners.server import run_server
+from pybotterfly.server.server import run_server
 
 run_server(
     messengers=messengers,  # :MessengersDivision. An instance of preconfigured MessengersDivision class
@@ -239,7 +253,6 @@ example/server.py
 #### Default TG client
 Starting TG client
 ```python
-
 from pybotterfly.runners.tg_client import start_tg_client
 
 start_tg_client(

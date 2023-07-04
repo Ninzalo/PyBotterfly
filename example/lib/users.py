@@ -33,9 +33,26 @@ async def get_user_stage(user_messenger_id: int, user_messenger: str):
 
 
 async def change_user_stage(
-    new_stage: str, user_messenger_id: int, user_messenger: str
+    to_stage_id: str, user_messenger_id: int, user_messenger: str
 ):
     sql = """UPDATE users SET user_stage = $1 
     WHERE user_messenger_id = $2 AND user_messenger = $3"""
-    params = (new_stage, user_messenger_id, user_messenger)
+    params = (to_stage_id, user_messenger_id, user_messenger)
+    await execute(sql, *params)
+
+
+async def get_user_access_level(user_messenger_id: int, user_messenger: str):
+    sql = """SELECT user_type FROM users 
+    WHERE user_messenger_id = $1 AND user_messenger = $2"""
+    params = (user_messenger_id, user_messenger)
+    result = await fetchval(sql, *params)
+    return result
+
+
+async def change_user_access_level(
+    to_access_level: str, user_messenger_id: int, user_messenger: str
+):
+    sql = """UPDATE users SET user_type = $1 
+    WHERE user_messenger_id = $2 AND user_messenger = $3"""
+    params = (to_access_level, user_messenger_id, user_messenger)
     await execute(sql, *params)

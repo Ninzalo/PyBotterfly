@@ -29,7 +29,7 @@ class Server:
         if not self._messengers._compiled:
             raise RuntimeError(f"Messengers weren't compiled")
 
-    async def handle_echo(
+    async def handle_request(
         self,
         reader: asyncio.streams.StreamReader,
         writer: asyncio.streams.StreamWriter,
@@ -88,7 +88,7 @@ class Server:
         for messenger in self._messengers._messengers_to_answer:
             messenger._throttler.start()
         server = await asyncio.start_server(
-            lambda reader, writer: self.handle_echo(
+            lambda reader, writer: self.handle_request(
                 reader=reader, writer=writer
             ),
             local_ip,

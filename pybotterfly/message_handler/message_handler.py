@@ -9,19 +9,31 @@ from pybotterfly.bot.transitions.transitions import Transitions
 class MessageHandler:
     def __init__(
         self,
-        user_stage_getter: Coroutine,
         transitions: Transitions,
+        user_stage_getter: Coroutine,
+        user_stage_changer: Coroutine,
+        user_access_level_getter: Coroutine | None = None,
+        user_access_level_changer: Coroutine | None = None,
         base_config: BaseConfig = BaseConfig,
     ) -> None:
         """
         Initialises a Message_handler instance.
 
+        :param transitions: An instance of the Transitions class.
+        :type transitions: Transitions
+
         :param user_stage_getter: A coroutine that receives 'user_messenger_id'
             and 'user_messenger'.
         :type user_stage_getter: Coroutine
 
-        :param transitions: An instance of the Transitions class.
-        :type transitions: Transitions
+        :param user_stage_changer: A coroutine that changes the 'user_stage'
+        :type user_stage_changer: Coroutine
+
+        :user_access_level_getter: A coroutine that receives 'user_type'
+        :type user_access_level_getter: Coroutine | None
+
+        :user_access_level_changer: A coroutine that changes the 'user_type'
+        :type user_access_level_changer: Coroutine | None
 
         :param base_config: An instance of the BaseConfig class.
         :type base_config: BaseConfig
@@ -31,9 +43,18 @@ class MessageHandler:
         """
         self._transitions = transitions
         self._user_stage_getter = user_stage_getter
+        self._user_stage_changer = user_stage_changer
+        self._user_access_level_getter = user_access_level_getter
+        self._user_access_level_changer = user_access_level_changer
+        self._base_config = base_config
         self._config = base_config
         if self._config.DEBUG_STATE:
             print(f"Added user stage getter: {user_stage_getter}")
+            if self._user_access_level_getter:
+                print(
+                    f"Added user access level getter: "
+                    f"{user_access_level_getter}"
+                )
         self._checks()
 
     async def get(self, message_class: MessageStruct) -> Returns:
@@ -50,11 +71,19 @@ class MessageHandler:
         user_stage = await self._user_stage_getter(
             message_class.user_id, message_class.messenger
         )
+        user_access_level = "any"
+        if self._user_access_level_getter != None:
+            user_access_level = await self._user_access_level_getter(
+                message_class.user_id, message_class.messenger
+            )
         return_cls = await self._transitions.run(
+            message=message_class,
             user_messenger_id=message_class.user_id,
             user_messenger=message_class.messenger,
             user_stage=user_stage,
-            message=message_class,
+            user_stage_changer=self._user_stage_changer,
+            user_access_level=user_access_level,
+            user_access_level_changer=self._user_access_level_changer,
         )
         return_cls = await self._shorten_inline_buttons(return_func=return_cls)
         return return_cls
@@ -80,9 +109,12 @@ class MessageHandler:
         :returns: None
         :rtype: NoneType
 
-        :raises: RuntimeError if the Transitions instance hasn't been compiled
-            or if the user stage getter coroutine doesn't receive
-            'user_messenger_id' and 'user_messenger'.
+        :raises:
+            RuntimeError: if the Transitions instance hasn't been compiled
+            RuntimeError: if the user stage getter coroutine doesn't receive
+                'user_messenger_id' and 'user_messenger'.
+            RuntimeError: if the user access level getter coroutine is not set
+                while user access level changer is set
         """
         if not self._transitions._compiled:
             raise RuntimeError(f"Transitions aren't compiled")
@@ -94,5 +126,43 @@ class MessageHandler:
                 "User stage getter don't receive 'user_messenger_id' "
                 "and 'user_messenger'"
             )
+        if inspect.getfullargspec(self._user_stage_changer)[0] != [
+            "to_stage_id",
+            "user_messenger_id",
+            "user_messenger",
+        ]:
+            error_str = (
+                "User stage changer don't receive 'to_stage_id', "
+                "'user_messenger_id' and 'user_messenger'"
+            )
+            raise RuntimeError(error_str)
+        if (
+            self._user_access_level_changer != None
+            and self._user_access_level_getter == None
+        ):
+            error_str = (
+                "user_access_level_getter must be set if "
+                "user_access_level_changer is set"
+            )
+            raise RuntimeError(error_str)
+        if self._user_access_level_getter != None and inspect.getfullargspec(
+            self._user_access_level_getter
+        )[0] != [
+            "user_messenger_id",
+            "user_messenger",
+        ]:
+            raise RuntimeError(
+                "User access level getter don't receive 'user_messenger_id' "
+                "and 'user_messenger'"
+            )
+        if self._user_access_level_changer != None and inspect.getfullargspec(
+            self._user_access_level_changer
+        )[0] != ["to_access_level", "user_messenger_id", "user_messenger"]:
+            error_str = (
+                "User access level changer don't receive "
+                "'to_access_level', 'user_messenger_id' and "
+                "'user_messenger'"
+            )
+            raise RuntimeError(error_str)
         if self._config.DEBUG_STATE:
             print(f"\n[SUCCESS] Message handler's checks passed\n")

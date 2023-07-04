@@ -72,3 +72,4 @@ class Returns:
         )
         if new_return not in self.returns:
             self.returns.append(new_return)
+        return self

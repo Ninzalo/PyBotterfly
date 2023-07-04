@@ -5,7 +5,7 @@ from lib import pages
 from lib.stages import General
 
 transitions = Transitions(
-    config=BASE_CONFIG,  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
     payloads=payloads,  # Payload transitions of Payloads class
 )
 
@@ -15,35 +15,79 @@ transitions.add_error_return(
 )
 
 # when the user is not in database
-# first message in chat to start a bot ('Начать' button in VK or '/start' command in TG)
+# first message in chat to start the bot ('Начать' button in VK or '/start' command in TG)
 transitions.add_transition(
     trigger="/start",  # : str. Is a default start input for TG. Trigger to run an FSM
-    src=General.start,  # :str. ‘Trigger’ will run FSM only if user is on this stage
-    dst=pages.first_page,  # :Coroutine. The destination of this transition
+    from_stage=General.start,  # :str. ‘Trigger’ will run FSM only if user is on this stage
+    to_stage=pages.first_page,  # :Coroutine. The destination of this transition
+    to_stage_id=General.first,  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
+    # access_level="user",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    # to_access_level="admin",  # :str. [Optional] specify access level of the page. Defaults to None
 )
 transitions.add_transition(
-    trigger="Начать",  # :str. Is a default start input for VK. Trigger to run an FSM
-    src=General.start,  # :str. ‘Trigger’ will run FSM only if user is on this stage
-    dst=pages.first_page,  # :Coroutine. The destination of this transition
+    trigger="Начать",
+    from_stage=General.start,
+    to_stage=pages.first_page,
+    to_stage_id=General.first,
 )
 
 # when the user is on the first page
 transitions.add_transition(
-    trigger="start",  # :str. Trigger to run an FSM
-    src=General.first,  # :str. ‘Trigger’ will run FSM only if user is on this stage
-    dst=pages.second_page,  # :Coroutine. The destination of this transition
+    trigger="start",
+    from_stage=General.first,
+    to_stage=pages.second_page,
+    to_stage_id=General.second,
+    access_level=["user", "admin"],
 )
 
 # when the user is on the third page
 transitions.add_transition(
     trigger="go to previous",
-    src=General.third,
-    dst=pages.second_page,
+    from_stage=General.third,
+    to_stage=pages.second_page,
+    to_stage_id=General.second,
 )
 transitions.add_transition(
     trigger="go to beginning",
-    src=General.third,
-    dst=pages.first_page,
+    from_stage=General.third,
+    to_stage=pages.first_page,
+    to_stage_id=General.first,
+)
+transitions.add_transition(
+    trigger="go to next",
+    from_stage=General.third,
+    to_stage=pages.fourth_page,
+    to_stage_id=General.fourth,
+    access_level="user",
+)
+
+# when the user is on the fourth page
+transitions.add_transition(
+    trigger="Admin",
+    from_stage=General.fourth,
+    to_stage=pages.fourth_admin_page,
+    to_access_level="admin",
+)
+transitions.add_transition(
+    trigger="Go back",
+    from_stage=General.fourth,
+    to_stage=pages.third_page,
+    to_stage_id=General.third,
+)
+
+# when the user is on the fifth page
+transitions.add_transition(
+    trigger="Go to beginning",
+    from_stage=General.fifth,
+    to_stage=pages.first_page,
+    to_stage_id=General.first,
+)
+transitions.add_transition(
+    trigger="User",
+    from_stage=General.fifth,
+    to_stage=pages.first_page,
+    to_stage_id=General.first,
+    to_access_level="user",
 )
 
 # compiles transitions

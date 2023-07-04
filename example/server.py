@@ -5,7 +5,7 @@ from configs.config import (
 )
 from configs.reply.reply_config import messengers
 from configs.message_handler.message_handler_config import message_handler
-from pybotterfly.runners.server import run_server
+from pybotterfly.server.server import run_server
 
 run_server(
     messengers=messengers,  # :MessengersDivision. An instance of preconfigured MessengersDivision class

@@ -5,7 +5,7 @@ from typing import Coroutine, List
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
-from pybotterfly.bot.transitions import payloads
+
 from pybotterfly.bot.transitions.payloads import Payloads
 
 
@@ -23,11 +23,17 @@ class Transition:
 
     :param to_stage: The coroutine representing the stage to transition to.
     :type to_stage: Coroutine
+
+    :param access_level: The user's access level. Defaults to ['any'].
+    :type access_level: List[str]
     """
 
     trigger: str | None
     from_stage: str
     to_stage: Coroutine
+    to_stage_id: str | None = None
+    access_level: List[str] = field(default_factory=["any"])
+    to_access_level: str | None = None
 
 
 @dataclass()
@@ -53,7 +59,13 @@ class Transitions:
                 print(f"Payloads aren't added")
 
     def add_transition(
-        self, trigger: str | None, src: str, dst: Coroutine
+        self,
+        trigger: str | None,
+        from_stage: str,
+        to_stage: Coroutine,
+        to_stage_id: str | None = None,
+        access_level: str | List[str] = "any",
+        to_access_level: str | None = None,
     ) -> None:
         """
         Adds a transition to the list of transitions.
@@ -61,10 +73,21 @@ class Transitions:
         :param trigger: The trigger that causes the transition to occur.
             If None, the transition will act as a default transition.
         :type trigger: str | None
-        :param src: The source state of the transition.
-        :type src: str
-        :param dst: The coroutine function that the transition goes to.
-        :type dst: Coroutine
+
+        :param from_stage: The source state of the transition.
+        :type from_stage: str
+
+        :param to_stage: The coroutine function that the transition goes to.
+        :type to_stage: Coroutine
+
+        :param to_stage_id: The ID of the stage the transition goes to.
+            Defaults to None
+        :type to_stage_id: str | None
+
+        :param access_level: The access level of the transition. Defaults
+            to 'any'
+        :type access_level: str | List[str]
+
         :raises ValueError: If transitions are already compiled, or if the
             transition already exists or if another trigger has already
             realized the transition, or if multiple 'else' blocks
@@ -72,8 +95,16 @@ class Transitions:
         """
         if isinstance(trigger, str):
             trigger = trigger.lower()
+        validated_access_level = (
+            [access_level] if isinstance(access_level, str) else access_level
+        )
         new_transition = Transition(
-            trigger=trigger, from_stage=src, to_stage=dst
+            trigger=trigger,
+            from_stage=from_stage,
+            to_stage=to_stage,
+            to_stage_id=to_stage_id,
+            access_level=validated_access_level,
+            to_access_level=to_access_level,
         )
         if self._compiled:
             raise ValueError(
@@ -84,11 +115,14 @@ class Transitions:
             error_str = f"Transition already exists: {new_transition}"
             raise ValueError(error_str)
 
-        if self._counter_unique(trigger=trigger, src=src, dst=dst) > 0:
+        if (
+            self._counter_unique(trigger=trigger, src=from_stage, dst=to_stage)
+            > 0
+        ):
             raise ValueError("Transition already realized by other trigger")
 
         if new_transition.trigger is None:
-            if self._counter_none(src=src) > 0:
+            if self._counter_none(src=from_stage) > 0:
                 raise ValueError("Multiple 'else' blocks aren't supported")
             self.transitions.append(new_transition)
         else:
@@ -129,14 +163,20 @@ class Transitions:
 
     async def run(
         self,
-        user_messenger_id: int,
-        user_messenger: BaseConfig.ADDED_MESSENGERS,
-        user_stage: str,
         message: MessageStruct,
+        user_messenger_id: int,
+        user_messenger: config.ADDED_MESSENGERS,
+        user_stage: str,
+        user_access_level: str | None,
+        user_stage_changer: Coroutine | None,
+        user_access_level_changer: Coroutine | None,
     ) -> Returns:
         """
         Runs the state machine with the given input message, and returns the
         output.
+
+        :param message: The message to process. Should have .text/.payload
+        :type message: Message_struct
 
         :param user_messenger_id: The ID of the user's messenger account.
         :type user_messenger_id: int
@@ -148,8 +188,14 @@ class Transitions:
         :param user_stage: The current stage of the state machine.
         :type user_stage: str
 
-        :param message: The message to process. Should have .text/.payload
-        :type message: Message_struct
+        :param user_access_level: The user's access level.
+        :type user_access_level: str | None
+
+        :param user_stage_changer: The stage changer function.
+        :type user_stage_changer: Coroutine | None
+
+        :param user_access_level_changer: The access level changer function.
+        :type user_access_level_changer: Coroutine | None
 
         :return: The output of the state machine.
         :rtype: Returns
@@ -163,40 +209,137 @@ class Transitions:
         if message.text != None and message.payload != None:
             message.text = None
         if message.text != None:
-            message.text = replace_emoji(message.text, replace="")
-            stage_transitions = await self._get_transitions_by_stage(
-                stage=user_stage
+            return_func = await self._fetch_transition(
+                message=message,
+                user_messenger_id=user_messenger_id,
+                user_messenger=user_messenger,
+                user_stage=user_stage,
+                user_access_level=user_access_level,
+                user_stage_changer=user_stage_changer,
+                user_access_level_changer=user_access_level_changer,
             )
-            for transition in stage_transitions:
-                if transition.trigger == message.text.lower():
-                    answer = await transition.to_stage(
-                        user_messenger_id, user_messenger, message.text
-                    )
-                    return answer
-            else_transition = await self._get_none_transition_by_stage(
-                stage=user_stage
-            )
-            answer = await else_transition.to_stage(
-                user_messenger_id, user_messenger, message.text
-            )
-            return answer
+            return return_func
         elif message.payload != None:
-            if self.payloads != None:
-                output = await self.payloads.run(entry_dict=message.payload)
-                if (
-                    user_stage == output.get("src")
-                    or output.get("src") == "any"
-                ):
-                    needed_func = await output.get("dst")(
-                        user_messenger_id,
-                        user_messenger,
-                        output.get("full_dict"),
-                    )
-                    return needed_func
-                needed_func = await self.error_return(
-                    user_messenger_id, user_messenger, output.get("full_dict")
-                )
-                return needed_func
+            return_func = await self._fetch_payload_transition(
+                message=message,
+                user_messenger_id=user_messenger_id,
+                user_messenger=user_messenger,
+                user_stage=user_stage,
+                user_access_level=user_access_level,
+                user_stage_changer=user_stage_changer,
+                user_access_level_changer=user_access_level_changer,
+            )
+            return return_func
+
+    async def _fetch_transition(
+        self,
+        message: MessageStruct,
+        user_messenger_id: int,
+        user_messenger: config.ADDED_MESSENGERS,
+        user_stage: str,
+        user_access_level: str,
+        user_stage_changer: Coroutine,
+        user_access_level_changer: Coroutine | None,
+    ):
+        message.text = replace_emoji(message.text, replace="")
+        stage_transitions = await self._get_transitions_by_stage(
+            stage=user_stage
+        )
+        needed_transition = None
+        for transition in stage_transitions:
+            if not (
+                user_access_level in transition.access_level
+                or transition.access_level == ["any"]
+            ):
+                continue
+            if transition.trigger != message.text.lower():
+                continue
+            needed_transition = transition
+            break
+        if needed_transition == None:
+            needed_transition = await self._get_none_transition_by_stage(
+                stage=user_stage
+            )
+        await self._change_user_stage(
+            to_stage_id=needed_transition.to_stage_id,
+            user_stage_changer=user_stage_changer,
+            user_messenger_id=user_messenger_id,
+            user_messenger=user_messenger,
+        )
+        await self._change_user_access_level(
+            to_access_level=transition.to_access_level,
+            user_access_level_changer=user_access_level_changer,
+            user_messenger_id=user_messenger_id,
+            user_messenger=user_messenger,
+        )
+        answer = await needed_transition.to_stage(
+            user_messenger_id, user_messenger, message.text
+        )
+        return answer
+
+    async def _fetch_payload_transition(
+        self,
+        message: MessageStruct,
+        user_messenger_id: int,
+        user_messenger: config.ADDED_MESSENGERS,
+        user_stage: str,
+        user_access_level: str,
+        user_stage_changer: Coroutine,
+        user_access_level_changer: Coroutine | None,
+    ) -> None | Coroutine:
+        if self.payloads == None:
+            return
+        output_dict = await self.payloads.run(
+            entry_dict=message.payload,
+            user_access_level=user_access_level,
+            user_stage=user_stage,
+        )
+        needed_func = await output_dict.get("dst")(
+            user_messenger_id,
+            user_messenger,
+            output_dict.get("full_dict"),
+        )
+        await self._change_user_stage(
+            to_stage_id=output_dict.get("to_stage_id"),
+            user_stage_changer=user_stage_changer,
+            user_messenger_id=user_messenger_id,
+            user_messenger=user_messenger,
+        )
+        await self._change_user_access_level(
+            to_access_level=output_dict.get("to_access_level"),
+            user_access_level_changer=user_access_level_changer,
+            user_messenger_id=user_messenger_id,
+            user_messenger=user_messenger,
+        )
+        return needed_func
+
+    async def _change_user_access_level(
+        self,
+        to_access_level: str | None,
+        user_access_level_changer: Coroutine | None,
+        user_messenger_id: str | int,
+        user_messenger: config.ADDED_MESSENGERS,
+    ) -> None:
+        if to_access_level != None and user_access_level_changer != None:
+            await user_access_level_changer(
+                to_access_level=to_access_level,
+                user_messenger_id=user_messenger_id,
+                user_messenger=user_messenger,
+            )
+
+    async def _change_user_stage(
+        self,
+        to_stage_id: str | None,
+        user_stage_changer: Coroutine | None,
+        user_messenger_id: str | int,
+        user_messenger: config.ADDED_MESSENGERS,
+    ) -> None:
+        if to_stage_id != None and user_stage_changer != None:
+            await user_stage_changer(
+                to_stage_id=to_stage_id,
+                user_messenger_id=user_messenger_id,
+                user_messenger=user_messenger,
+            )
 
     def _counter_none(self, src: str) -> int:
         amount = 0
@@ -220,22 +363,23 @@ class Transitions:
         return amount
 
     def _get_all_source_stages(self) -> List[str]:
-        list_of_transitions = list(
-            set([transition.from_stage for transition in self.transitions])
-        )
+        list_of_transitions = []
+        for transition in self.transitions:
+            if transition.from_stage != "any":
+                list_of_transitions.append(transition.from_stage)
+            if transition.to_stage_id != None:
+                list_of_transitions.append(transition.to_stage_id)
         if self.payloads is not None:
             list_of_transitions += self.payloads.get_all_source_stages()
-            list_of_transitions = list(set(list_of_transitions))
+        list_of_transitions = list(set(list_of_transitions))
         return list_of_transitions
 
     def _add_none_transition_to_all_stages(self) -> int:
         added_none_transitions = 0
         for stage in self._get_all_source_stages():
-            if stage == 'any':
-                continue
             if not self._check_none_transition_by_stage(stage=stage):
                 self.add_transition(
-                    trigger=None, src=stage, dst=self.error_return
+                    trigger=None, from_stage=stage, to_stage=self.error_return
                 )
                 added_none_transitions += 1
         return added_none_transitions
