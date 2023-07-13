@@ -50,6 +50,7 @@ class ShortenedRuledItem(ShortenedItem):
         if new_short_item == "":
             new_short_item = self.item
         self.short_item = new_short_item
+        self.rules = []
 
     def __repr__(self) -> str:
         return_str = (
@@ -61,7 +62,6 @@ class ShortenedRuledItem(ShortenedItem):
 
 @dataclass()
 class Trigger:
-    rules: List[ShortenedItem]
     key: ShortenedItem
     value: ShortenedRuledItem
 
@@ -76,7 +76,6 @@ class Trigger:
 class Payload:
     main_key: ShortenedItem
     main_value: ShortenedItem
-    rules: List[ShortenedItem]
     triggers: List[Trigger]
     data: List[ShortenedItem]
     to_stage: Coroutine
@@ -106,11 +105,7 @@ class Payload:
         length_of_payload = len(str(payload_dict).encode())
         length = length_of_payload - additional_data
         space_for_data = 64 - length
-        if (
-            len(self.rules) > 0
-            and space_for_data < additional_data
-            and additional_data > 0
-        ):
+        if space_for_data < additional_data and additional_data > 0:
             error_str = f"Not enough space for data in: {self.__repr__()}"
             raise ValueError(error_str)
         return space_for_data
@@ -160,7 +155,6 @@ class Payload:
 
 @dataclass()
 class Classification:
-    rules: List[ShortenedItem]
     main_value: ShortenedItem
     payloads: List[Payload]
 
@@ -338,7 +332,6 @@ class Payloads(Rules):
         new_payload = Payload(
             main_key=self.main_key,
             main_value=main_value,
-            rules=self.rules,
             triggers=list_of_triggers,
             data=list_of_data_items,
             from_stage=from_stage,
@@ -393,10 +386,6 @@ class Payloads(Rules):
 
         :return: A dictionary containing the shortened payload.
         :rtype: dict
-
-        :raises RuntimeError: If payloads have not been compiled.
-
-        :raises ValueError: If the specified payload key is not valid.
         """
 
         if not self._compiled:
@@ -466,6 +455,7 @@ class Payloads(Rules):
             - If the payloads have already been compiled.
         """
 
+        self._remove_empty_classifications()
         if self.classes == []:
             error_str = f"Failed to compile payloads. No payloads added"
             raise RuntimeError(error_str)
@@ -735,12 +725,12 @@ class Payloads(Rules):
     def _return_error_payload_dict(self) -> dict:
         if self.config.DEBUG_STATE:
             print(f"Input resulted as an error")
-        return self._convert_payload_to_dict(entry_payload=self._error_payload)
+        return self.shortener(
+            self._convert_payload_to_dict(entry_payload=self._error_payload)
+        )
 
     def _add_new_classification(self, main_value: ShortenedItem) -> None:
-        new_classification = Classification(
-            rules=self.rules, main_value=main_value, payloads=[]
-        )
+        new_classification = Classification(main_value=main_value, payloads=[])
         self.classes.append(new_classification)
 
     def _get_classification(self, main_value: ShortenedItem) -> Classification:
@@ -802,7 +792,7 @@ class Payloads(Rules):
         if not self._rules_applied:
             self._added_trigger_values_before_autoruling.append(value)
         new_value = ShortenedRuledItem(item=value, rules=self.rules)
-        new_trigger = Trigger(rules=self.rules, key=key, value=new_value)
+        new_trigger = Trigger(key=key, value=new_value)
         if new_trigger in list_of_triggers:
             error_str = (
                 f"'{new_trigger}' already exists in " f"payload: {payload}"
@@ -865,11 +855,9 @@ class Payloads(Rules):
         )
 
     def _auto_add_rules(self) -> None:
-        new_rules = []
         list_of_keys = []
         for key, _ in self._added_trigger_values_before_autoruling.items():
             if key[0] not in list_of_keys:
-                new_rules.append(key)
                 self._add_rule(key)
                 list_of_keys.append(key[0])
 
@@ -894,3 +882,13 @@ class Payloads(Rules):
                     f"Payload 'to_stage' should have '{arg}' arg: {func}"
                 )
                 raise ValueError(error_str)
+
+    def _remove_empty_classifications(self) -> None:
+        for num, classification in enumerate(self.classes):
+            if classification.payloads == []:
+                self.classes.pop(num)
+                if self.config.DEBUG_STATE:
+                    print(
+                        f"Classification '{classification.main_value.item}' "
+                        "was removed due to empty Payloads list"
+                    )

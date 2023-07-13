@@ -59,7 +59,7 @@ class TgClient:
         print(f"Rate test started at {test_start_time}")
         for num in range(1, messages_amount + 1):
             message_struct = MessageStruct(
-                user_id=test_id, messenger="tg", text=f"{num}"
+                user_id=test_id, messenger="tg", text=f"TEST_MESSAGE_n{num}"
             )
             await send_to_server(
                 message=message_struct,
@@ -157,6 +157,11 @@ def run_test(
     :return: None
     :rtype: NoneType
     """
+    
+    if messages_amount <= 0:
+        raise ValueError("Messages amount must be greater than 0")
+    if messages_amount > 200:
+        raise ValueError("Messages amount must be less than 200")
 
     tg_client = _get_tg_client(
         dispatcher=dispatcher,
