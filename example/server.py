@@ -12,5 +12,5 @@ run_server(
     message_handler=message_handler,  # :MessageHandler. An instance of preconfigured MessageHandler class
     local_ip=LOCAL_IP,  # :str. Your local ip
     local_port=LOCAL_PORT,  # :int. Your local port
-    base_config=BASE_CONFIG,  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )

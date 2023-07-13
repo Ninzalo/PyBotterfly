@@ -18,8 +18,9 @@ You can add payload transitions with `payload.add_payload` method. New payload t
 payloads.add_payload(
     payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
     to_stage=page_coroutine,  # :Coroutine. The destination of this payload transition
-    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    # [Optional]
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
     to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
@@ -62,8 +63,9 @@ Example:
 payloads.add_payload(
     payload="type:default/action:go_to_third_page/data:/plus:",  # :str. Trigger to run an FSM based on existing references
     to_stage=third_page_coroutine,  # :Coroutine. The destination of this payload transition
-    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    # [Optional]
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
     to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
@@ -74,8 +76,9 @@ payloads.apply_rules() # generates rules for shortening payloads
 # Adding new payloads (and applying existing rules) to the project without effect on existing ones
 payloads.add_payload(
     to_stage=fourth_page_coroutine,  # :Coroutine. The destination of this payload transition
-    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     from_stage="USER_CURRENT_STAGE",  # :str. ‘Path’ will run FSM only if user is on this stage
+    # [Optional]
+    to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
     to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
 )
@@ -110,8 +113,8 @@ An instance of Transitions class to add transitions to Finite State Machine
 from pybotterfly.bot.transitions.transitions import Transitions
 
 transitions = Transitions(
+    payloads=payloads,  # :Payloads. Payload transitions of Payloads class
     config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
-    payloads=payloads,  # Payload transitions of Payloads class
 )
 ```
 
@@ -119,9 +122,10 @@ transitions = Transitions(
 You can add transitions with `transitions.add_transition` method
 ```python
 transitions.add_transition(
-    trigger="/start",  # : str. Is a default start input for TG. Trigger to run an FSM
+    trigger="/start",  # : str|None. Is a default start input for TG. Trigger to run an FSM
     from_stage="USER_CURRENT_STAGE",  # :str. ‘Trigger’ will run FSM only if user is on this stage
     to_stage=page_coroutine,  # :Coroutine. The destination of this transition
+    # [Optional]
     to_stage_id="StageID",  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     access_level="ALLOWED_USER_ACCESS_LEVEL",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
     to_access_level="NEW_USER_ACCESS_LEVEL",  # :str. [Optional] specify access level of the page. Defaults to None
@@ -156,9 +160,10 @@ example/configs/transitions/transitions_config.py
 from pybotterfly.message_handler.message_handler import MessageHandler
 
 message_handler = MessageHandler(
-    transitions=transitions,  # Transitions of Transitions class
+    transitions=transitions,  # :Transitions. Transitions of Transitions class
     user_stage_getter=get_user_stage_coroutine,  # :Coroutine. Function to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
     user_stage_changer=user_stage_changer_coroutine,  # :Coroutine. Function to change user’s stage. Should contain 'to_stage_id', ‘user_messenger_id’ and ‘user_messenger’ args.
+    # [Optional]
     user_access_level_getter=user_access_level_getter_coroutine,  # :Coroutine. [Optional] Function to get user’s access level. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
     user_access_level_changer=user_access_level_changer_coroutine,  # :Coroutine. [Optional] Function to change user’s access level. Should contain 'tu_access_level', ‘user_messenger_id’ and ‘user_messenger’ args.
     base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
@@ -188,8 +193,8 @@ You can divide messages from different messengers with `messengers.register_mess
 messengers.register_messenger(
     trigger="tg", # :str. The variable by which the separation occurs
     reply_func=DefaultTgReplier(
-        tg_bot=bot, # An instance of preconfigured TG Bot
-        config=BASE_CONFIG # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+        tg_bot=bot, # :Bot. An instance of preconfigured TG Bot
+        config=BASE_CONFIG # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
     ).tg_answer, # :Coroutine. A function that sends message to the user
     messages_per_second=4, # :int. Message reply rate in messages per second
 )
@@ -241,7 +246,7 @@ run_server(
     message_handler=message_handler,  # :MessageHandler. An instance of preconfigured MessageHandler class
     local_ip=LOCAL_IP,  # :str. Your local ip
     local_port=LOCAL_PORT,  # :int. Your local port
-    base_config=BASE_CONFIG,  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -256,10 +261,10 @@ Starting TG client
 from pybotterfly.runners.tg_client import start_tg_client
 
 start_tg_client(
-    dispatcher=dp, # Your preconfigured TG Dispatcher
+    dispatcher=dp,  # :Dispatcher. Your preconfigured TG Dispatcher
     handler_ip=LOCAL_IP, # :str. Your local ip
     handler_port=LOCAL_PORT, # :int. Your local port
-    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG, # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -270,10 +275,10 @@ from pybotterfly.runners.tg_client import run_test
 run_test(
     test_id=TEST_ID_TG, # :int. You TG id for testing
     messages_amount=30, # :int. Amount of test messages
-    dispatcher=dp, # Your preconfigured TG Dispatcher
+    dispatcher=dp,  # :Dispatcher. Your preconfigured TG Dispatcher
     handler_ip=LOCAL_IP, # :str. Your local ip
     handler_port=LOCAL_PORT, # :int. Your local port
-    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG, # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -288,10 +293,10 @@ Starting VK client
 from pybotterfly.runners.vk_client import start_vk_client, run_test
 
 start_vk_client(
-    handler=bot, # Your preconfigured VK Bot
+    handler=bot,  # :Bot. Your preconfigured VK Bot
     handler_ip=LOCAL_IP, # :str. Your local ip
     handler_port=LOCAL_PORT, # :int. Your local port
-    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG, # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -302,10 +307,10 @@ from pybotterfly.runners.vk_client import run_test
 run_test(
     test_id=TEST_ID_VK, # :int. You VK id for testing
     messages_amount=30, # :int. Amount of test messages
-    handler=bot, # Your preconfigured VK Bot
+    handler=bot,  # :Bot. Your preconfigured VK Bot
     handler_ip=LOCAL_IP, # :str. Your local ip
     handler_port=LOCAL_PORT, # :int. Your local port
-    base_config=BASE_CONFIG, # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    base_config=BASE_CONFIG, # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 

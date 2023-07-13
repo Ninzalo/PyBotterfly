@@ -8,7 +8,7 @@ An instance of Buttons class to create keyboard
 from pybotterfly.bot.returns.buttons import Buttons
 
 keyboard = Buttons(
-    config=BASE_CONFIG  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -18,7 +18,7 @@ An instance of InlineButtons class to create keyboard
 from pybotterfly.bot.returns.buttons import InlineButtons
 
 keyboard = InlineButtons(
-    config=BASE_CONFIG  # [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
 
@@ -72,7 +72,7 @@ Every page coroutine should include `user_messenger_id`, `user_messenger`, `mess
 async def page(
     user_messenger_id: int,  # :int. User id to send the message
     user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
-    message: str | dict,  # :str | dict. Received message | payload from user
+    message: str | dict,  # :str|dict. Received message | payload from user
 ) -> Returns:
     ...
 ```
@@ -92,8 +92,9 @@ await return_cls.add_return(
     user_messenger_id=user_messenger_id,  # :int. User id to send the message
     user_messenger=user_messenger,  # :str. Represents one of the added messengers to which the user belongs
     text=text,  #:str. Text of the message (page)
-    keyboard=keyboard,  # [Optional] :Buttons. An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
-    # inline_keyboard=keyboard,  # [Optional] :InlineButtons. An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
+    # [Optional]
+    keyboard=keyboard,  # :Buttons. [Optional] An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
+    # inline_keyboard=keyboard,  # :InlineButtons. [Optional] An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
 )
 ```
 Note: You can add multiple returns at once

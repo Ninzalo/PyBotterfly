@@ -5,8 +5,8 @@ from lib import pages
 from lib.stages import General
 
 transitions = Transitions(
+    payloads=payloads,  # :Payloads. Payload transitions of Payloads class
     config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
-    payloads=payloads,  # Payload transitions of Payloads class
 )
 
 # adding the 'error_return'. When user's input is not added to 'transitions'
@@ -17,9 +17,10 @@ transitions.add_error_return(
 # when the user is not in database
 # first message in chat to start the bot ('Начать' button in VK or '/start' command in TG)
 transitions.add_transition(
-    trigger="/start",  # : str. Is a default start input for TG. Trigger to run an FSM
+    trigger="/start",  # : str|None. Is a default start input for TG. Trigger to run an FSM
     from_stage=General.start,  # :str. ‘Trigger’ will run FSM only if user is on this stage
     to_stage=pages.first_page,  # :Coroutine. The destination of this transition
+    # [Optional]
     to_stage_id=General.first,  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
     # access_level="user",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
     # to_access_level="admin",  # :str. [Optional] specify access level of the page. Defaults to None

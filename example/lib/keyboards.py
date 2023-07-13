@@ -51,8 +51,9 @@ async def third_kb() -> Buttons:
     keyboard.add_button(label="Go to next", color="positive")
     keyboard.add_line()
     keyboard.add_button(
-        label="This button will not work", color="primary"
-    )  # Really, this will not work. Just try to tap it c:
+        label="This button will not work",  # Really, this will not work. Just try to tap it c:
+        color="primary",
+    )
     keyboard.confirm()
     return keyboard
 
