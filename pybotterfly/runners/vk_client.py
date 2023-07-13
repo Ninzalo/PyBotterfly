@@ -171,8 +171,8 @@ def run_test(
 
     if messages_amount <= 0:
         raise ValueError("Messages amount must be greater than 0")
-    if messages_amount > 200:
-        raise ValueError("Messages amount must be less than 200")
+    if messages_amount > 50:
+        raise ValueError("Messages amount must be less than 50")
 
     vk_client = _get_vk_client(
         handler=handler,
