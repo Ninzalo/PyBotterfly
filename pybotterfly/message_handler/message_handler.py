@@ -91,6 +91,8 @@ class MessageHandler:
     async def _shorten_inline_buttons(self, return_func: Returns) -> None:
         if self._transitions.payloads == None:
             return return_func
+        if return_func == None:
+            return return_func
         for return_message in return_func.returns:
             if return_message.inline_keyboard != None:
                 for inline_button in return_message.inline_keyboard.buttons:

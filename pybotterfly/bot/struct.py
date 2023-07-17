@@ -1,5 +1,19 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Literal, List
 from pybotterfly.base_config import BaseConfig
+
+
+@dataclass()
+class File:
+    name: str | None = None
+    tag: Literal["photo", "video", "document"] | None = None
+    ext: str | None = None
+    file_bytes: bytes | None = None
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}({self.name}, {self.tag}, {self.ext})"
+        )
 
 
 @dataclass()
@@ -26,3 +40,4 @@ class MessageStruct:
     messenger: BaseConfig.ADDED_MESSENGERS
     text: str | None = None
     payload: dict | None = None
+    files: List[File] = field(default_factory=list)

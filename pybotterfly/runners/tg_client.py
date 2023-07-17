@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime
+from io import BytesIO
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.struct import MessageStruct
-from pybotterfly.bot.converters import str_to_dict
+from pybotterfly.bot.struct import File, MessageStruct
+from pybotterfly.bot.converters import str_to_dict, file_to_string
 from pybotterfly.server.server_func import send_to_server
 
 # Tg async library
@@ -22,6 +23,10 @@ class TgClient:
         self._local_port = local_port
         self._config = base_config
         self._dp.callback_query_handler()(self.callback_message_handler)
+        self._dp.message_handler(
+            content_types=types.ContentTypes.PHOTO
+            | types.ContentTypes.DOCUMENT
+        )(self.file_handler)
         self._dp.message_handler()(self.message_handler)
         self._started = False
 
@@ -34,6 +39,41 @@ class TgClient:
             messenger="tg",
             payload=str_to_dict(string=query.data),
         )
+        await send_to_server(
+            message=message_struct,
+            local_ip=self._local_ip,
+            local_port=self._local_port,
+        )
+
+    async def file_handler(self, message: types.Message) -> None:
+        message_struct = MessageStruct(
+            user_id=message.from_id, messenger="tg", text=message.text
+        )
+        print(f"Photo: \n{message.photo}")
+        print(f"Doc: {message.document}")
+        # print(f"Video: \n{message.video}")
+        if message.photo != []:
+            file_in_io = BytesIO()
+            await message.photo[-1].download(destination_file=file_in_io)
+            message_struct.files.append(
+                File(
+                    name="test",
+                    tag="photo",
+                    ext=".png",
+                    file_bytes=file_to_string(file_in_io.getvalue()),
+                )
+            )
+        if message.document != None:
+            file_in_io = BytesIO()
+            await message.document.download(destination_file=file_in_io)
+            message_struct.files.append(
+                File(
+                    name=f"{message.document.file_name}",
+                    tag="document",
+                    ext=f".{str(message.document.file_name).split('.')[-1]}",
+                    file_bytes=file_to_string(file_in_io.getvalue()),
+                )
+            )
         await send_to_server(
             message=message_struct,
             local_ip=self._local_ip,

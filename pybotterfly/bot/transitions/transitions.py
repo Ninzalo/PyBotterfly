@@ -208,6 +208,8 @@ class Transitions:
             )
         if message.text != None and message.payload != None:
             message.text = None
+        if message.text == None and message.payload == None:
+            message.text = ""
         if message.text != None:
             return_func = await self._fetch_transition(
                 message=message,
@@ -425,5 +427,5 @@ class Transitions:
 
     async def _get_none_transition_by_stage(self, stage: str) -> Transition:
         for transition in self.transitions:
-            if transition.trigger is None and transition.from_stage == stage:
+            if transition.trigger == None and transition.from_stage == stage:
                 return transition

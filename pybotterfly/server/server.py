@@ -1,10 +1,11 @@
 import asyncio
-import pickle
 from datetime import datetime
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.converters import dataclass_from_dict
+from pybotterfly.bot.converters import (
+    bytes_to_dataclass,
+    string_to_file,
+)
 from pybotterfly.bot.returns.message import Return
-from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.reply.reply_division import MessengersDivision
 from pybotterfly.message_handler.message_handler import MessageHandler
 
@@ -45,10 +46,12 @@ class Server:
             if self._config.DEBUG_STATE:
                 print("Received empty byte array")
             return
-        message = pickle.loads(byte_array)
-        message_cls = dataclass_from_dict(
-            struct=MessageStruct, dictionary=message
-        )
+        message_cls = bytes_to_dataclass(byte_array)
+        if message_cls.files != []:
+            for encoded_file in message_cls.files:
+                encoded_file.file_bytes = string_to_file(
+                    encoded_file.file_bytes
+                )
         addr = writer.get_extra_info("peername")
         receive_time = datetime.now()
         print(f"[{receive_time}] Received {message_cls!r} from {addr!r}")
