@@ -23,10 +23,12 @@ class TgClient:
         self._local_port = local_port
         self._config = base_config
         self._dp.callback_query_handler()(self.callback_message_handler)
-        self._dp.message_handler(
-            content_types=types.ContentTypes.PHOTO
-            | types.ContentTypes.DOCUMENT
-        )(self.file_handler)
+        self._dp.message_handler(content_types=types.ContentTypes.DOCUMENT)(
+            self.file_handler
+        )
+        self._dp.message_handler(content_types=types.ContentTypes.PHOTO)(
+            self.photo_handler
+        )
         self._dp.message_handler()(self.message_handler)
         self._started = False
 
@@ -39,18 +41,13 @@ class TgClient:
             messenger="tg",
             payload=str_to_dict(string=query.data),
         )
-        await send_to_server(
-            message=message_struct,
-            local_ip=self._local_ip,
-            local_port=self._local_port,
-        )
+        await self.server_sender(message_struct=message_struct)
 
-    async def file_handler(self, message: types.Message) -> None:
+    async def photo_handler(self, message: types.Message) -> None:
         message_struct = MessageStruct(
             user_id=message.from_id, messenger="tg", text=message.text
         )
         print(f"Photo: \n{message.photo}")
-        print(f"Doc: {message.document}")
         if message.photo != []:
             file_in_io = BytesIO()
             await message.photo[-1].download(destination_file=file_in_io)
@@ -62,6 +59,13 @@ class TgClient:
                     file_bytes=file_to_string(file_in_io.getvalue()),
                 )
             )
+        await self.server_sender(message_struct=message_struct)
+
+    async def file_handler(self, message: types.Message) -> None:
+        message_struct = MessageStruct(
+            user_id=message.from_id, messenger="tg", text=message.text
+        )
+        print(f"Doc: \n{message.document}")
         if message.document != None:
             file_in_io = BytesIO()
             await message.document.download(destination_file=file_in_io)
@@ -73,16 +77,15 @@ class TgClient:
                     file_bytes=file_to_string(file_in_io.getvalue()),
                 )
             )
-        await send_to_server(
-            message=message_struct,
-            local_ip=self._local_ip,
-            local_port=self._local_port,
-        )
+        await self.server_sender(message_struct=message_struct)
 
     async def message_handler(self, message: types.Message) -> None:
         message_struct = MessageStruct(
             user_id=message.from_id, messenger="tg", text=message.text
         )
+        await self.server_sender(message_struct=message_struct)
+
+    async def server_sender(self, message_struct: MessageStruct) -> None:
         await send_to_server(
             message=message_struct,
             local_ip=self._local_ip,
@@ -100,11 +103,7 @@ class TgClient:
             message_struct = MessageStruct(
                 user_id=test_id, messenger="tg", text=f"TEST_MESSAGE_n{num}"
             )
-            await send_to_server(
-                message=message_struct,
-                local_ip=self._local_ip,
-                local_port=self._local_port,
-            )
+            await self.server_sender(message_struct=message_struct)
         print(
             f"Rate test to {test_id} with {messages_amount} messages finished "
             f"in {(datetime.now() - test_start_time).total_seconds()} seconds"
