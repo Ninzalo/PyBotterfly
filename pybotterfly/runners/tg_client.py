@@ -51,13 +51,12 @@ class TgClient:
         )
         print(f"Photo: \n{message.photo}")
         print(f"Doc: {message.document}")
-        # print(f"Video: \n{message.video}")
         if message.photo != []:
             file_in_io = BytesIO()
             await message.photo[-1].download(destination_file=file_in_io)
             message_struct.files.append(
                 File(
-                    name="test",
+                    name=message.photo[-1].file_unique_id,
                     tag="photo",
                     ext=".png",
                     file_bytes=file_to_string(file_in_io.getvalue()),

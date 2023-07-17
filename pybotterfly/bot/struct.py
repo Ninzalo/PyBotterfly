@@ -6,7 +6,7 @@ from pybotterfly.base_config import BaseConfig
 @dataclass()
 class File:
     name: str | None = None
-    tag: Literal["photo", "video", "document"] | None = None
+    tag: Literal["photo", "document"] | None = None
     ext: str | None = None
     file_bytes: bytes | None = None
 
@@ -34,6 +34,9 @@ class MessageStruct:
 
     :param payload: Additional data sent with the message. Defaults to None.
     :type payload: dict, optional
+
+    :param files: List of files attached to the message. Defaults to [].
+    :type files: List[File], optional
     """
 
     user_id: int

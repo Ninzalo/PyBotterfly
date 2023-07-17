@@ -56,7 +56,7 @@ def file_to_string(file: bytes) -> str:
     Convert a file to a string.
 
     :param file: The file to convert.
-    :type file: bytearray
+    :type file: bytes
 
     :return: The file as a string.
     :rtype: str
@@ -102,7 +102,19 @@ def str_to_bytes(string: str) -> bytes:
     return pickle.dumps(string)
 
 
-def bytearray_to_str(file: bytes) -> str:
+def dataclass_to_bytes(obj) -> bytes:
+    """
+    Convert a dataclass to a file.
+
+    :param obj: The dataclass to convert.
+
+    :return: The dataclass as bytes.
+    :rtype: bytes
+    """
+    return str_to_bytes(dataclass_to_str(obj))
+
+
+def bytes_to_str(file: bytes) -> str:
     """
     Convert a file to a string.
 
@@ -120,22 +132,11 @@ def str_to_dataclass(string: str):
     Convert a string to a dataclass.
 
     :param string: The string to convert.
+    :type string: str
 
     :return: The dataclass you've encoded
     """
     return json.loads(string, object_hook=dataclass_object_load)
-
-
-def dataclass_to_bytes(obj) -> bytes:
-    """
-    Convert a dataclass to a file.
-
-    :param obj: The dataclass to convert.
-
-    :return: The dataclass as bytes.
-    :rtype: bytes
-    """
-    return str_to_bytes(dataclass_to_str(obj))
 
 
 def bytes_to_dataclass(encoded_obj: bytes):
@@ -147,4 +148,4 @@ def bytes_to_dataclass(encoded_obj: bytes):
 
     :return: The dataclass you've encoded
     """
-    return str_to_dataclass(bytearray_to_str(encoded_obj))
+    return str_to_dataclass(bytes_to_str(encoded_obj))
