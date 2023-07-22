@@ -69,10 +69,12 @@ class MessageHandler:
             message_class.user_id, message_class.messenger
         )
         user_access_level = "any"
+        user_access_level_setter = None
         if self._user_access_level != None:
             user_access_level = await self._user_access_level.getter(
                 message_class.user_id, message_class.messenger
             )
+            user_access_level_setter = self._user_access_level.setter
         return_cls = await self._transitions.run(
             message=message_class,
             user_messenger_id=message_class.user_id,
@@ -80,7 +82,7 @@ class MessageHandler:
             user_stage=user_stage,
             user_stage_changer=self._user_stage.setter,
             user_access_level=user_access_level,
-            user_access_level_changer=self._user_access_level.setter,
+            user_access_level_changer=user_access_level_setter,
         )
         return_cls = await self._shorten_inline_buttons(return_func=return_cls)
         return return_cls
