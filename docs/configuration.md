@@ -158,14 +158,19 @@ example/configs/transitions/transitions_config.py
 #### Instantiation of the class
 ```python
 from pybotterfly.message_handler.message_handler import MessageHandler
+from pybotterfly.message_handler.struct import Func
 
 message_handler = MessageHandler(
     transitions=transitions,  # :Transitions. Transitions of Transitions class
-    user_stage_getter=get_user_stage_coroutine,  # :Coroutine. Function to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
-    user_stage_changer=user_stage_changer_coroutine,  # :Coroutine. Function to change user’s stage. Should contain 'to_stage_id', ‘user_messenger_id’ and ‘user_messenger’ args.
+    user_stage=Func(
+        getter=get_user_stage,  # :Coroutine. A coroutine to get user’s stage. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
+        setter=change_user_stage,  # :Coroutine. A coroutine to change user’s stage. Should contain 'to_stage_id', ‘user_messenger_id’ and ‘user_messenger’ args.
+    ),
     # [Optional]
-    user_access_level_getter=user_access_level_getter_coroutine,  # :Coroutine. [Optional] Function to get user’s access level. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
-    user_access_level_changer=user_access_level_changer_coroutine,  # :Coroutine. [Optional] Function to change user’s access level. Should contain 'tu_access_level', ‘user_messenger_id’ and ‘user_messenger’ args.
+    user_access_level=Func(
+        getter=get_user_access_level,  # :Coroutine. [Optional] A coroutine to get user’s access level. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
+        setter=change_user_access_level,  # :Coroutine. [Optional] A coroutine to change user’s access level. Should contain 'tu_access_level', ‘user_messenger_id’ and ‘user_messenger’ args.
+    ),
     base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 ```
