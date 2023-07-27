@@ -34,6 +34,10 @@ class BaseConfig:
         buttons that can be in a message sent by the bot.
         Defaults to 10.
     :vartype MAX_BUTTONS_AMOUNT: int
+
+    :ivar ALLOWED_FILE_EXTENSIONS: A list of allowed extensions for a file.
+    :vartype ALLOWED_FILE_EXTENSIONS: Literal[".png", ".jpg", ".jpeg", ".gif",
+        ".doc", ".docx", ".pdf"]
     """
 
     ADDED_MESSENGERS: TypeAlias = Literal["vk", "tg"]
@@ -44,3 +48,15 @@ class BaseConfig:
     MAX_BUTTONS_IN_ROW = 4
     MAX_BUTTON_ROWS = 9
     MAX_BUTTONS_AMOUNT = 10
+    ALLOWED_FILE_TYPES: TypeAlias = Literal["photo", "document"]
+    ALLOWED_FILE_EXTENSIONS: TypeAlias = Literal[
+        # [PHOTO]
+        ".png",
+        ".jpg",
+        ".jpeg",
+        # [DOCUMENT]
+        ".gif",
+        ".doc",
+        ".docx",
+        ".pdf",
+    ]

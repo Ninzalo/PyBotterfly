@@ -1,6 +1,6 @@
 import asyncio
 import asyncpg
-from configs.config import PG_PORT, LOCAL_IP, PG_DBNAME, PG_USERNAME
+from configs.config import PG_PORT, LOCAL_IP, DB_NAME, PG_USERNAME
 
 
 async def create_users_table():
@@ -19,7 +19,7 @@ async def create_users_table():
     conn = await asyncpg.connect(
         user=PG_USERNAME,
         host=LOCAL_IP,
-        database=PG_DBNAME,
+        database=DB_NAME,
         port=PG_PORT,
     )
     values = await conn.execute(sql)

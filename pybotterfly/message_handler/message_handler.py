@@ -1,3 +1,4 @@
+from typing import Coroutine
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
@@ -11,6 +12,7 @@ class MessageHandler:
         transitions: Transitions,
         user_stage: Func,
         user_access_level: Func | None = None,
+        user_file_saver: Coroutine | None = None,
         base_config: BaseConfig = BaseConfig,
     ) -> None:
         """
@@ -34,6 +36,12 @@ class MessageHandler:
                 ‘user_messenger’ args.
         :type user_access_level: Func | None
 
+        :param user_file_saver: A coroutine that saves user’s file to
+            the database. Should contain 'file_name', 'file_extension',
+            'file_tag', 'file_bytes', 'user_messenger_id' and
+            'user_messenger' args.
+        :type user_file_saver: Coroutine | None
+
         :param base_config: An instance of the BaseConfig class.
         :type base_config: BaseConfig
 
@@ -43,6 +51,7 @@ class MessageHandler:
         self._transitions = transitions
         self._user_stage = user_stage
         self._user_access_level = user_access_level
+        self._user_file_saver = user_file_saver
         self._base_config = base_config
         self._config = base_config
         if self._config.DEBUG_STATE:
@@ -52,6 +61,8 @@ class MessageHandler:
                     f"Added user access level getter: "
                     f"{user_access_level.getter}"
                 )
+            if self._user_file_saver:
+                print(f"Added user file saver: {user_file_saver}")
         self._checks()
 
     async def get(self, message_class: MessageStruct) -> Returns:
@@ -83,6 +94,7 @@ class MessageHandler:
             user_stage_changer=self._user_stage.setter,
             user_access_level=user_access_level,
             user_access_level_changer=user_access_level_setter,
+            user_file_saver=self._user_file_saver,
         )
         return_cls = await self._shorten_inline_buttons(return_func=return_cls)
         return return_cls
@@ -123,6 +135,11 @@ class MessageHandler:
         if self._user_access_level != None:
             self._user_access_level.args_check(
                 arg="to_access_level", func=self._user_access_level.setter
+            )
+        if self._user_file_saver != None:
+            self._user_stage.args_check(
+                arg=["file_name", "file_extension", "file_tag", "file_bytes"],
+                func=self._user_file_saver,
             )
         if self._config.DEBUG_STATE:
             print(f"\n[SUCCESS] Message handler's checks passed\n")

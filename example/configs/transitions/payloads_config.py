@@ -40,8 +40,9 @@ payloads.apply_rules()
 payloads.add_payload(
     payload="type:secret/action:go_to_secret_page",
     to_stage=pages.fifth_page,
-    to_stage_id=General.fifth,
     from_stage=General.second,
+    # [Optional]
+    to_stage_id=General.fifth,
     access_level="admin",
 )
 

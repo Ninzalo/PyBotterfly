@@ -1,19 +1,27 @@
 from dataclasses import dataclass, field
-from typing import Literal, List
+from typing import List
 from pybotterfly.base_config import BaseConfig
 
 
 @dataclass()
 class File:
-    name: str | None = None
-    tag: Literal["photo", "document"] | None = None
-    ext: str | None = None
-    file_bytes: bytes | None = None
+    name: str
+    ext: BaseConfig.ALLOWED_FILE_EXTENSIONS
+    tag: BaseConfig.ALLOWED_FILE_TYPES
+    file_bytes: bytes
 
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}({self.name}, {self.tag}, {self.ext})"
         )
+
+    def __dict__(self):
+        return {
+            "name": self.name,
+            "ext": self.ext,
+            "tag": self.tag,
+            "file_bytes": self.file_bytes,
+        }
 
 
 @dataclass()

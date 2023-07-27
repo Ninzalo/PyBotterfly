@@ -47,7 +47,6 @@ class TgClient:
         message_struct = MessageStruct(
             user_id=message.from_id, messenger="tg", text=message.text
         )
-        print(f"Photo: \n{message.photo}")
         if message.photo != []:
             file_in_io = BytesIO()
             await message.photo[-1].download(destination_file=file_in_io)
@@ -65,7 +64,6 @@ class TgClient:
         message_struct = MessageStruct(
             user_id=message.from_id, messenger="tg", text=message.text
         )
-        print(f"Doc: \n{message.document}")
         if message.document != None:
             file_in_io = BytesIO()
             await message.document.download(destination_file=file_in_io)

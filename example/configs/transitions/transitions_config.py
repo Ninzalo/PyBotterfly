@@ -1,11 +1,12 @@
 from configs.config import BASE_CONFIG
-from pybotterfly.bot.transitions.transitions import Transitions
+from pybotterfly.bot.transitions.transitions import Transitions, FileTrigger
 from configs.transitions.payloads_config import payloads
 from lib import pages
 from lib.stages import General
 
 transitions = Transitions(
     payloads=payloads,  # :Payloads. Payload transitions of Payloads class
+    # [Optional]
     config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 )
 
@@ -17,7 +18,7 @@ transitions.add_error_return(
 # when the user is not in database
 # first message in chat to start the bot ('Начать' button in VK or '/start' command in TG)
 transitions.add_transition(
-    trigger="/start",  # : str|None. Is a default start input for TG. Trigger to run an FSM
+    trigger="/start",  # : str|FileTrigger|None. Is a default start input for TG. Trigger to run an FSM
     from_stage=General.start,  # :str. ‘Trigger’ will run FSM only if user is on this stage
     to_stage=pages.first_page,  # :Coroutine. The destination of this transition
     # [Optional]
@@ -89,6 +90,20 @@ transitions.add_transition(
     to_stage=pages.first_page,
     to_stage_id=General.first,
     to_access_level="user",
+)
+# files handling on the fifth page
+transitions.add_transition(
+    trigger=FileTrigger(
+        extensions=[
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".docx",
+        ],  # :BaseConfig.ALLOWED_FILE_EXTENSIONS | List[BaseConfig.ALLOWED_FILE_EXTENSIONS]. File extension to be handled
+        temporary=True,  # :bool. [Optional] if True, the file will not be saved in the database
+    ),
+    from_stage=General.fifth,
+    to_stage=pages.fifth_page,
 )
 
 # compiles transitions

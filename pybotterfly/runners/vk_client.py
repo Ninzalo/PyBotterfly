@@ -1,8 +1,12 @@
 import json
 import asyncio
+import re
 from datetime import datetime
+
 from pybotterfly.base_config import BaseConfig
-from pybotterfly.bot.struct import MessageStruct
+from pybotterfly.bot.struct import File, MessageStruct
+from pybotterfly.bot.downloaders import download_file
+from pybotterfly.bot.converters import file_to_string
 from pybotterfly.server.server_func import send_to_server
 
 # Vk async library
@@ -41,20 +45,60 @@ class VkClient:
         )
 
     async def handle_message_event(self, event: Message):
+        payload = None
         if event.payload:
             payload = json.loads(event.payload)
-        else:
-            payload = None
+        files = []
+        for message_file in event.attachments:
+            if message_file.doc != None:
+                files.append(
+                    await self._file_downloader(message_file=message_file)
+                )
+            if message_file.photo != None:
+                files.append(
+                    await self._photo_downloader(message_file=message_file)
+                )
         message = MessageStruct(
             user_id=int(event.from_id),
             messenger="vk",
             text=event.text,
             payload=payload,
         )
+        if bool(len(files)):
+            message.files = files
         await send_to_server(
             message=message,
             local_ip=self._local_ip,
             local_port=self._local_port,
+        )
+
+    async def _file_downloader(self, message_file) -> File:
+        file_bytes = await download_file(message_file.doc.url)
+        return File(
+            name=message_file.doc.title.split(".")[0],
+            tag="document",
+            ext=f".{message_file.doc.ext}",
+            file_bytes=file_to_string(file_bytes),
+        )
+
+    async def _photo_downloader(self, message_file) -> File:
+        file_url = message_file.photo.sizes[-5].url
+        file_bytes = await download_file(file_url)
+        return File(
+            name=str(
+                re.search(
+                    pattern=r"(\w+|\d+)\.(jpg|jpeg|png)",
+                    string=file_url,
+                ).group(0)
+            )
+            .split(".jpg")[0]
+            .split(".jpeg")[0]
+            .split(".png")[0],
+            tag="photo",
+            ext=str(
+                re.search(pattern=r"\.(jpg|jpeg|png)", string=file_url).group(0)
+            ),
+            file_bytes=file_to_string(file_bytes),
         )
 
     def start_vk_bot(self):

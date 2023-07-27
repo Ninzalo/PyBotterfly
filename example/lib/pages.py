@@ -1,3 +1,4 @@
+from dataclasses import is_dataclass
 from pybotterfly.bot.returns.message import Returns
 from lib import keyboards
 from lib import texts
@@ -91,6 +92,13 @@ async def fifth_page(
         user_messenger=user_messenger,
         text=text,
         keyboard=keyboard,
+        attachments=(
+            message.get("files")
+            if isinstance(message, dict)
+            and isinstance(message.get("files"), list)
+            and is_dataclass(message.get("files")[0])
+            else None
+        ),
     )
     return return_cls
 

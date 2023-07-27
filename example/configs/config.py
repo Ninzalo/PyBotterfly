@@ -6,24 +6,24 @@ from pybotterfly.base_config import BaseConfig
 load_dotenv()
 
 # VK data
-token_vk = str(os.getenv("GROUP_API_VK"))  # Your VK GROUP API KEY
-group_id = str(os.getenv("GROUP_ID_VK"))  # Your group id
-TEST_ID_VK = int(os.getenv("TEST_ID_VK"))  # Your VK id for running tests
+token_vk = str(os.getenv("GROUP_API_VK"))  # :str. Your VK GROUP API KEY
+group_id = str(os.getenv("GROUP_ID_VK"))  # :str. Your group id
+TEST_ID_VK = int(os.getenv("TEST_ID_VK"))  # :int. Your VK id for running tests
 
 # TG data
-token_tg = str(os.getenv("GROUP_API_TG"))  # Your TG API KEY
-TEST_ID_TG = int(os.getenv("TEST_ID_TG"))  # Your TG id for running tests
+token_tg = str(os.getenv("GROUP_API_TG"))  # :str. Your TG API KEY
+TEST_ID_TG = int(os.getenv("TEST_ID_TG"))  # :int. Your TG id for running tests
 
-LOCAL_IP = "127.0.0.1"  # default local ip
-LOCAL_PORT = 8888  # default local port
+LOCAL_IP = "127.0.0.1"  # :str. default local ip
+LOCAL_PORT = 8888  # :int. default local port
 
 # Replies per second
 MESSAGE_REPLY_RATE = 4
 
-# PostgreSQL data
-PG_USERNAME = "postgres"  # Your PostgreSQL username
-PG_DBNAME = "YOUR_DB_NAME"  # Your PostgreSQL database name
-PG_PORT = 5433  # Your PostgreSQL port
+# Database data
+PG_USERNAME = "postgres"  # :str. Your PostgreSQL username
+DB_NAME = "YOUR_DB_NAME"  # :str. Your PostgreSQL database name
+PG_PORT = 5433  # :int. Your PostgreSQL port
 
 # Edit Base bots config
 BASE_CONFIG = BaseConfig()

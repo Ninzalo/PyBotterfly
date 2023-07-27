@@ -1,12 +1,31 @@
 import inspect
 from emoji import replace_emoji
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from typing import Coroutine, List
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
-
 from pybotterfly.bot.transitions.payloads import Payloads
+
+
+@dataclass(init=False)
+class FileTrigger:
+    def __init__(
+        self,
+        extensions: List[BaseConfig.ALLOWED_FILE_TYPES]
+        | BaseConfig.ALLOWED_FILE_TYPES,
+        temporary: bool = True,
+    ) -> None:
+        self.extensions = (
+            extensions if isinstance(extensions, list) else [extensions]
+        )
+        self.temporary = temporary
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(extensions={self.extensions}, "
+            f"temporary={self.temporary})"
+        )
 
 
 @dataclass()
@@ -16,7 +35,7 @@ class Transition:
 
     :param trigger: The event that triggers the transition, if any.
         Defaults to None.
-    :type trigger: str or None
+    :type trigger: str | FileTrigger | None
 
     :param from_stage: The name of the stage to transition from.
     :type from_stage: str
@@ -24,11 +43,18 @@ class Transition:
     :param to_stage: The coroutine representing the stage to transition to.
     :type to_stage: Coroutine
 
+    :param to_stage_id: The ID of the stage to transition to. Defaults to None.
+    :type to_stage_id: str | None
+
     :param access_level: The user's access level. Defaults to ['any'].
     :type access_level: List[str]
+
+    :param to_access_level: The user's access level to transition to.
+        Defaults to None
+    :type to_access_level: str | None
     """
 
-    trigger: str | None
+    trigger: str | FileTrigger | None
     from_stage: str
     to_stage: Coroutine
     to_stage_id: str | None = None
@@ -170,6 +196,7 @@ class Transitions:
         user_access_level: str | None,
         user_stage_changer: Coroutine | None,
         user_access_level_changer: Coroutine | None,
+        user_file_saver: Coroutine | None = None,
     ) -> Returns:
         """
         Runs the state machine with the given input message, and returns the
@@ -197,6 +224,10 @@ class Transitions:
         :param user_access_level_changer: The access level changer function.
         :type user_access_level_changer: Coroutine | None
 
+        :param user_file_saver: A coroutine that saves user’s file to
+            the database.
+        :type user_file_saver: Coroutine | None
+
         :return: The output of the state machine.
         :rtype: Returns
         """
@@ -219,6 +250,7 @@ class Transitions:
                 user_access_level=user_access_level,
                 user_stage_changer=user_stage_changer,
                 user_access_level_changer=user_access_level_changer,
+                user_file_saver=user_file_saver,
             )
             return return_func
         elif message.payload != None:
@@ -242,6 +274,7 @@ class Transitions:
         user_access_level: str,
         user_stage_changer: Coroutine,
         user_access_level_changer: Coroutine | None,
+        user_file_saver: Coroutine | None = None,
     ):
         message.text = replace_emoji(message.text, replace="")
         stage_transitions = await self._get_transitions_by_stage(
@@ -254,7 +287,24 @@ class Transitions:
                 or transition.access_level == ["any"]
             ):
                 continue
-            if transition.trigger != message.text.lower():
+            if not (
+                (transition.trigger == message.text.lower())
+                or (
+                    is_dataclass(transition.trigger)
+                    and bool(len(message.files))
+                    and bool(
+                        sum(
+                            [
+                                int(True)
+                                for message_file in message.files
+                                if message_file.ext
+                                in transition.trigger.extensions
+                            ]
+                        )
+                        == len(message.files)
+                    )
+                )
+            ):
                 continue
             needed_transition = transition
             break
@@ -269,10 +319,20 @@ class Transitions:
             user_messenger=user_messenger,
         )
         await self._change_user_access_level(
-            to_access_level=transition.to_access_level,
+            to_access_level=needed_transition.to_access_level,
             user_access_level_changer=user_access_level_changer,
             user_messenger_id=user_messenger_id,
             user_messenger=user_messenger,
+        )
+        await self._save_user_file(
+            message=message,
+            transition=needed_transition,
+            user_messenger_id=user_messenger_id,
+            user_messenger=user_messenger,
+            user_file_saver=user_file_saver,
+        )
+        message.text = await self._convert_message_file_to_dict(
+            message=message, transition=needed_transition
         )
         answer = await needed_transition.to_stage(
             user_messenger_id, user_messenger, message.text
@@ -342,6 +402,42 @@ class Transitions:
                 user_messenger_id=user_messenger_id,
                 user_messenger=user_messenger,
             )
+
+    async def _save_user_file(
+        self,
+        message: MessageStruct,
+        transition: Transition,
+        user_messenger_id: int,
+        user_messenger: config.ADDED_MESSENGERS,
+        user_file_saver: Coroutine | None,
+    ) -> None:
+        if (
+            user_file_saver != None
+            and is_dataclass(transition.trigger)
+            and bool(len(message.files))
+            and not transition.trigger.temporary
+        ):
+            for message_file in message.files:
+                await user_file_saver(
+                    file_name=message_file.name,
+                    file_extension=message_file.ext,
+                    file_tag=message_file.tag,
+                    file_bytes=message_file.file_bytes,
+                    user_messenger_id=user_messenger_id,
+                    user_messenger=user_messenger,
+                )
+
+    async def _convert_message_file_to_dict(
+        self, message: MessageStruct, transition: Transition
+    ) -> dict | str:
+        if (
+            message.text == ""
+            and is_dataclass(transition.trigger)
+            and bool(len(message.files))
+        ):
+            files_dict = {"files": message.files}
+            return files_dict
+        return message.text
 
     def _counter_none(self, src: str) -> int:
         amount = 0

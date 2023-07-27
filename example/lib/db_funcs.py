@@ -1,5 +1,5 @@
 import asyncpg
-from configs.config import PG_DBNAME, PG_PORT, PG_USERNAME, LOCAL_IP
+from configs.config import DB_NAME, PG_PORT, PG_USERNAME, LOCAL_IP
 
 
 async def execute(sql, *args):
@@ -34,7 +34,7 @@ async def _get_db():
     conn = await asyncpg.connect(
         user=PG_USERNAME,
         host=LOCAL_IP,
-        database=PG_DBNAME,
+        database=DB_NAME,
         port=PG_PORT,
     )
     return conn
