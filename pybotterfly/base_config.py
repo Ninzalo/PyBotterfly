@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, List, get_args
 
 
 @dataclass()
@@ -60,3 +60,4 @@ class BaseConfig:
         ".docx",
         ".pdf",
     ]
+    ALLOWED_FILE_EXTENSIONS_LIST: List[str] = get_args(ALLOWED_FILE_EXTENSIONS)

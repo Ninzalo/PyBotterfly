@@ -65,16 +65,18 @@ class TgClient:
             user_id=message.from_id, messenger="tg", text=message.text
         )
         if message.document != None:
-            file_in_io = BytesIO()
-            await message.document.download(destination_file=file_in_io)
-            message_struct.files.append(
-                File(
-                    name=f"{message.document.file_name}",
-                    tag="document",
-                    ext=f".{str(message.document.file_name).split('.')[-1]}",
-                    file_bytes=file_to_string(file_in_io.getvalue()),
+            doc_ext = f".{str(message.document.file_name).split('.')[-1]}"
+            if doc_ext in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
+                file_in_io = BytesIO()
+                await message.document.download(destination_file=file_in_io)
+                message_struct.files.append(
+                    File(
+                        name=f"{message.document.file_name}",
+                        tag="document",
+                        ext=doc_ext,
+                        file_bytes=file_to_string(file_in_io.getvalue()),
+                    )
                 )
-            )
         await self.server_sender(message_struct=message_struct)
 
     async def message_handler(self, message: types.Message) -> None:

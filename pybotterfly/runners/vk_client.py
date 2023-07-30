@@ -51,13 +51,17 @@ class VkClient:
         files = []
         for message_file in event.attachments:
             if message_file.doc != None:
-                files.append(
-                    await self._file_downloader(message_file=message_file)
+                doc_file = await self._file_downloader(
+                    message_file=message_file
                 )
+                if doc_file != None:
+                    files.append(doc_file)
             if message_file.photo != None:
-                files.append(
-                    await self._photo_downloader(message_file=message_file)
+                photo_file = await self._photo_downloader(
+                    message_file=message_file
                 )
+                if photo_file != None:
+                    files.append(photo_file)
         message = MessageStruct(
             user_id=int(event.from_id),
             messenger="vk",
@@ -73,6 +77,11 @@ class VkClient:
         )
 
     async def _file_downloader(self, message_file) -> File:
+        if (
+            f".{message_file.doc.ext}"
+            not in self._config.ALLOWED_FILE_EXTENSIONS_LIST
+        ):
+            return
         file_bytes = await download_file(message_file.doc.url)
         return File(
             name=message_file.doc.title.split(".")[0],
@@ -83,6 +92,11 @@ class VkClient:
 
     async def _photo_downloader(self, message_file) -> File:
         file_url = message_file.photo.sizes[-5].url
+        photo_ext = str(
+            re.search(pattern=r"\.(jpg|jpeg|png)", string=file_url).group(0)
+        )
+        if photo_ext not in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
+            return
         file_bytes = await download_file(file_url)
         return File(
             name=str(
@@ -95,9 +109,7 @@ class VkClient:
             .split(".jpeg")[0]
             .split(".png")[0],
             tag="photo",
-            ext=str(
-                re.search(pattern=r"\.(jpg|jpeg|png)", string=file_url).group(0)
-            ),
+            ext=photo_ext,
             file_bytes=file_to_string(file_bytes),
         )
 
