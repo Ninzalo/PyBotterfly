@@ -11,7 +11,7 @@ group_id = str(os.getenv("GROUP_ID_VK"))  # :str. Your group id
 TEST_ID_VK = int(os.getenv("TEST_ID_VK"))  # :int. Your VK id for running tests
 
 # TG data
-token_tg = str(os.getenv("GROUP_API_TG"))  # :str. Your TG API KEY
+token_tg = str(os.getenv("BOT_API_TG"))  # :str. Your TG bot's API KEY
 TEST_ID_TG = int(os.getenv("TEST_ID_TG"))  # :int. Your TG id for running tests
 
 LOCAL_IP = "127.0.0.1"  # :str. default local ip

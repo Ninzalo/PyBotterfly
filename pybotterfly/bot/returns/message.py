@@ -1,8 +1,19 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from typing import List, Self
 from pybotterfly.bot.returns.buttons import Buttons, InlineButtons
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.struct import File
+
+
+def file_validator(message: str | dict) -> List[File] | None:
+    return (
+        message.get("files")
+        if isinstance(message, dict)
+        and isinstance(message.get("files"), list)
+        and bool(len(message.get("files")))
+        and is_dataclass(message.get("files")[0])
+        else None
+    )
 
 
 @dataclass()

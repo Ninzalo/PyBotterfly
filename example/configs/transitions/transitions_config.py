@@ -35,76 +35,113 @@ transitions.add_transition(
 
 # when the user is on the first page
 transitions.add_transition(
-    trigger="start",
+    trigger="Start",
     from_stage=General.first,
     to_stage=pages.second_page,
     to_stage_id=General.second,
-    access_level=["user", "admin"],
-)
-
-# when the user is on the third page
-transitions.add_transition(
-    trigger="go to previous",
-    from_stage=General.third,
-    to_stage=pages.second_page,
-    to_stage_id=General.second,
-)
-transitions.add_transition(
-    trigger="go to beginning",
-    from_stage=General.third,
-    to_stage=pages.first_page,
-    to_stage_id=General.first,
-)
-transitions.add_transition(
-    trigger="go to next",
-    from_stage=General.third,
-    to_stage=pages.fourth_page,
-    to_stage_id=General.fourth,
-    access_level="user",
 )
 
 # when the user is on the fourth page
 transitions.add_transition(
     trigger="Admin",
     from_stage=General.fourth,
-    to_stage=pages.fourth_admin_page,
+    to_stage=pages.fourth_page,
     to_access_level="admin",
 )
 transitions.add_transition(
-    trigger="Go back",
+    trigger="Next",
     from_stage=General.fourth,
-    to_stage=pages.third_page,
+    to_stage=pages.fifth_page,
+    to_stage_id=General.fifth,
+    access_level="admin",
+)
+transitions.add_transition(
+    trigger="Back",
+    from_stage=General.fourth,
+    to_stage=pages.third_before_page,
     to_stage_id=General.third,
+    access_level="user",
 )
 
 # when the user is on the fifth page
-transitions.add_transition(
-    trigger="Go to beginning",
-    from_stage=General.fifth,
-    to_stage=pages.first_page,
-    to_stage_id=General.first,
-)
-transitions.add_transition(
-    trigger="User",
-    from_stage=General.fifth,
-    to_stage=pages.first_page,
-    to_stage_id=General.first,
-    to_access_level="user",
-)
-# files handling on the fifth page
 transitions.add_transition(
     trigger=FileTrigger(
         extensions=[
             ".png",
             ".jpg",
             ".jpeg",
-            ".docx",
         ],  # :BaseConfig.ALLOWED_FILE_EXTENSIONS | List[BaseConfig.ALLOWED_FILE_EXTENSIONS]. File extension to be handled
         temporary=True,  # :bool. [Optional] if True, the file will not be saved in the database
     ),
     from_stage=General.fifth,
-    to_stage=pages.fifth_page,
+    to_stage=pages.sixth_page,
+    to_stage_id=General.sixth,
+    access_level="admin",
 )
+transitions.add_transition(
+    trigger="Skip",
+    from_stage=General.fifth,
+    to_stage=pages.sixth_page,
+    to_stage_id=General.sixth,
+    access_level="admin",
+)
+transitions.add_transition(
+    trigger="Back",
+    from_stage=General.fifth,
+    to_stage=pages.fourth_page,
+    to_stage_id=General.fourth,
+    access_level="admin",
+    to_access_level="user",
+)
+
+# when the user is on the sixth page
+transitions.add_transition(
+    trigger=FileTrigger(
+        extensions=[
+            ".xls",
+            ".xlsx",
+            ".docx",
+            ".pdf",
+        ],  # :BaseConfig.ALLOWED_FILE_EXTENSIONS | List[BaseConfig.ALLOWED_FILE_EXTENSIONS]. File extension to be handled
+        temporary=True,  # :bool. [Optional] if True, the file will not be saved in the database
+    ),
+    from_stage=General.sixth,
+    to_stage=pages.seventh_page,
+    to_stage_id=General.seventh,
+    access_level="admin",
+)
+transitions.add_transition(
+    trigger="Skip",
+    from_stage=General.sixth,
+    to_stage=pages.seventh_page,
+    to_stage_id=General.seventh,
+    access_level="admin",
+)
+transitions.add_transition(
+    trigger="Back",
+    from_stage=General.sixth,
+    to_stage=pages.fifth_page,
+    to_stage_id=General.fifth,
+    access_level="admin",
+)
+
+# when the user is on the seventh page
+transitions.add_transition(
+    trigger="Restart",
+    from_stage=General.seventh,
+    to_stage=pages.first_page,
+    to_stage_id=General.first,
+    access_level="admin",
+    to_access_level="user",
+)
+transitions.add_transition(
+    trigger="Back",
+    from_stage=General.seventh,
+    to_stage=pages.sixth_page,
+    to_stage_id=General.sixth,
+    access_level="admin",
+)
+
 
 # compiles transitions
 transitions.compile()

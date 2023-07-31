@@ -4,58 +4,74 @@ async def first_str() -> str:
 
 
 async def second_str() -> str:
-    text = f"This is the second page!\nNow let's tap the inline button"
+    text = (
+        f"Try to tap on the “Deleted button” or on the 'Start'. You will "
+        f"receive an error.\n"
+        f"The only way to get to the next page is to click "
+        f"'Go next' inline button."
+    )
     return text
 
 
-async def third_str(message: dict | None = None) -> str:
+async def third_before_str(data: str, id: int) -> str:
     text = (
-        f"This is the third page!\n"
-        f"You can go back by tapping the 'Go to previous' button\n"
-        f"Or you can go to the beginning by tapping the 'Go to beginning' button"
+        f"You passed in 'data' and 'id' params with the previous payload.\n"
+        f"Data: {data}\n"
+        f"ID:  {id}\n"
+        f"Now press the 'Tap it' button"
     )
-    if isinstance(message, dict):
-        text += (
-            f"\n\nYour data from payload: "
-            f"{message.get('data'), message.get('plus')}"
-        )
-    else:
-        text += f"\n\nNo data passed in as a dict"
+    return text
+
+
+async def third_after_str() -> str:
+    text = (
+        f"Your 'stage_id' field in the DB was not changed, but the "
+        f"page was updated.\n"
+        f"You can check it by clicking 'Tap it' button from the previous "
+        f"message"
+    )
     return text
 
 
 async def fourth_str() -> str:
     text = (
-        f"This is the fourth page.\n"
-        f"You will not be able to go to the secret page until you become "
-        f"an Admin.\n"
-        f"You can became an admin by tapping the 'Admin' button."
+        f"Only admins are allowed to go to next page.\n"
+        f"You can check it by clicking 'Next' button. You will receive "
+        f"an error until you press the 'Admin' button"
     )
-    return text
-
-
-async def fourth_admin_str() -> str:
-    text = f"Now you are an admin!\n"
     return text
 
 
 async def fifth_str() -> str:
     text = (
-        f"Congrats! You've reached the secret page!\n"
-        f"You can switch back to a normal user by tapping the 'User' button.\n"
-        f"Or you can just go to the beginning by tapping the 'Go to beginning'"
-        f"button"
+        f"Here you can send me any photo (nothing will be saved, "
+        f"promise you) to go to the next page.\n"
+        f"Or you can just skip this :c"
     )
     return text
 
 
-async def secret_page() -> str:
-    text = f"Wow! You are on the secret page!\nGood job c:"
+async def sixth_str() -> str:
+    text = (
+        f"Here you can send me any document with ‘.xls’ / ‘.xlsx’ "
+        f"/ ’.docx’ / ’.pdf’ extension (again, nothing will be saved) to "
+        f"complete the training"
+    )
+    return text
+
+
+async def seventh_str() -> str:
+    text = (
+        f"Congrats!!!\n"
+        "You’ve completed the training.\n"
+        "Now you know how to create basic bot with the PyBotterfly library.\n"
+        "Click the button below to restart your training"
+    )
     return text
 
 
 async def error_return(message: str | None = None) -> str:
     text = f"Input error :c"
-    if message != None:
+    if message != None and message != "":
         text += f"\nUnsopported message: {message}"
     return text

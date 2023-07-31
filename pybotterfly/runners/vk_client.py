@@ -48,6 +48,8 @@ class VkClient:
         payload = None
         if event.payload:
             payload = json.loads(event.payload)
+            if payload == {"command": "start"}:
+                payload = None
         files = []
         for message_file in event.attachments:
             if message_file.doc != None:

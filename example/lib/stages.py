@@ -8,3 +8,5 @@ class General(NamedTuple):
     third = "third_page"
     fourth = "fourth_page"
     fifth = "fifth_page"
+    sixth = "sixth_page"
+    seventh = "seventh_page"

@@ -36,8 +36,8 @@ class BaseConfig:
     :vartype MAX_BUTTONS_AMOUNT: int
 
     :ivar ALLOWED_FILE_EXTENSIONS: A list of allowed extensions for a file.
-    :vartype ALLOWED_FILE_EXTENSIONS: Literal[".png", ".jpg", ".jpeg", ".gif",
-        ".doc", ".docx", ".pdf"]
+    :vartype ALLOWED_FILE_EXTENSIONS: Literal[".png", ".jpg", ".jpeg", ".xls",
+        ".xlsx", ".doc", ".docx", ".pdf"]
     """
 
     ADDED_MESSENGERS: TypeAlias = Literal["vk", "tg"]
@@ -55,7 +55,8 @@ class BaseConfig:
         ".jpg",
         ".jpeg",
         # [DOCUMENT]
-        ".gif",
+        ".xls",
+        ".xlsx",
         ".doc",
         ".docx",
         ".pdf",

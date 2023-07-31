@@ -9,19 +9,20 @@ async def first_kb() -> Buttons:
     return keyboard
 
 
-async def second_kb() -> InlineButtons:
+async def second_ikb() -> InlineButtons:
     keyboard = InlineButtons(config=BASE_CONFIG)
     keyboard.add_button(
-        label="Go to next",
-        color="primary",
+        label="Go next",
+        color="positive",
         payload={
-            "type": "default",
+            "type": "data",
             "action": "go_to_third_page",
-            "data": 123,
-            "plus": 111,
+            "data": "hidden data",
+            "id": 111,
         },  # payload argument is required for Inline_buttons
     )
-    # adding button that we removed in configuration
+    keyboard.add_line()
+    # adding button that we will remove in configuration
     keyboard.add_button(
         label="Deleted button",
         color="negative",
@@ -30,29 +31,30 @@ async def second_kb() -> InlineButtons:
             "id": "integer",
         },  # payload argument is required for Inline_buttons
     )
-    keyboard.add_line()
+    keyboard.confirm()
+    return keyboard
+
+
+async def third_before_ikb() -> InlineButtons:
+    keyboard = InlineButtons(config=BASE_CONFIG)
     keyboard.add_button(
-        label="Secret Page",
-        color="negative",
+        label="Tap it",
+        color="primary",
         payload={
-            "type": "secret",
-            "action": "go_to_secret_page",
-        },  # payload argument is required for Inline_buttons
+            "type": "transition",
+            "action": "go_to_third_after_page",
+        },
     )
     keyboard.confirm()
     return keyboard
 
 
-async def third_kb() -> Buttons:
-    keyboard = Buttons(config=BASE_CONFIG)
-    keyboard.add_button(label="Go to previous", color="secondary")
-    keyboard.add_button(label="Go to beginning", color="negative")
-    keyboard.add_line()  # Your next button will be on a new row
-    keyboard.add_button(label="Go to next", color="positive")
-    keyboard.add_line()
+async def third_after_ikb() -> InlineButtons:
+    keyboard = InlineButtons(config=BASE_CONFIG)
     keyboard.add_button(
-        label="This button will not work",  # Really, this will not work. Just try to tap it c:
-        color="primary",
+        label="Go next",
+        color="positive",
+        payload={"type": "transition", "action": "go_to_fourth_page"},
     )
     keyboard.confirm()
     return keyboard
@@ -60,29 +62,27 @@ async def third_kb() -> Buttons:
 
 async def fourth_kb() -> Buttons:
     keyboard = Buttons(config=BASE_CONFIG)
-    keyboard.add_button(label="Admin", color="positive")
-    keyboard.add_button(label="Go back", color="negative")
-    keyboard.confirm()
-    return keyboard
-
-
-async def fourth_admin_kb() -> Buttons:
-    keyboard = Buttons(config=BASE_CONFIG)
-    keyboard.add_button(label="Go back", color="negative")
+    keyboard.add_button(label="Admin", color="secondary")
+    keyboard.add_button(label="Next", color="positive")
+    keyboard.add_line()
+    keyboard.add_button(label="Back", color="negative")
     keyboard.confirm()
     return keyboard
 
 
 async def fifth_kb() -> Buttons:
     keyboard = Buttons(config=BASE_CONFIG)
-    keyboard.add_button(label="User", color="positive")
-    keyboard.add_button(label="Go to beginning", color="negative")
+    keyboard.add_button(label="Skip", color="secondary")
+    keyboard.add_line()
+    keyboard.add_button(label="Back", color="negative")
     keyboard.confirm()
     return keyboard
 
 
-async def secret_kb() -> Buttons:
+async def seventh_kb() -> Buttons:
     keyboard = Buttons(config=BASE_CONFIG)
-    keyboard.add_button(label="Go to beginning", color="negative")
+    keyboard.add_button(label="Restart", color="positive")
+    keyboard.add_line()
+    keyboard.add_button(label="Back", color="negative")
     keyboard.confirm()
     return keyboard
