@@ -142,7 +142,7 @@ async def seventh_page(
 async def error_page(
     user_messenger_id: int, user_messenger: str, message: str | dict
 ) -> Returns:
-    text = await texts.error_return(message=message)
+    text = await texts.error_return()
     return_cls = Returns()
     await return_cls.add_return(
         user_messenger_id=user_messenger_id,

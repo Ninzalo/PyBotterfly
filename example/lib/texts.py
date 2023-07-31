@@ -70,8 +70,6 @@ async def seventh_str() -> str:
     return text
 
 
-async def error_return(message: str | None = None) -> str:
+async def error_return() -> str:
     text = f"Input error :c"
-    if message != None and message != "":
-        text += f"\nUnsopported message: {message}"
     return text
