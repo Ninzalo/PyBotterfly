@@ -65,7 +65,9 @@ class TgClient:
             user_id=message.from_id, messenger="tg", text=message.text
         )
         if message.document != None:
-            doc_ext = f".{str(message.document.file_name).split('.')[-1]}"
+            doc_ext = (
+                f".{str(message.document.file_name).split('.')[-1]}".lower()
+            )
             if doc_ext in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
                 file_in_io = BytesIO()
                 await message.document.download(destination_file=file_in_io)

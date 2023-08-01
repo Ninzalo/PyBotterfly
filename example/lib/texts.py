@@ -37,7 +37,10 @@ async def fourth_str() -> str:
     text = (
         f"Only admins are allowed to go to next page.\n"
         f"You can check it by clicking 'Next' button. You will receive "
-        f"an error until you press the 'Admin' button"
+        f"an error until you press the 'Admin' button.\n"
+        f"Once you've pressed 'Admin' button, you will receive the same "
+        f"message, but your access level in the DB will be upgraded "
+        f"to an 'admin'"
     )
     return text
 
@@ -53,7 +56,7 @@ async def fifth_str() -> str:
 
 async def sixth_str() -> str:
     text = (
-        f"Here you can send me any document with ‘.xls’ / ‘.xlsx’ "
+        f"Here you can send me any document (< 50 MB) with ‘.xls’ / ‘.xlsx’ "
         f"/ ’.docx’ / ’.pdf’ extension (again, nothing will be saved) to "
         f"complete the training"
     )

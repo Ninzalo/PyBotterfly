@@ -79,11 +79,11 @@ class Server:
         await self._messengers.get_func(return_message=return_message)
         if self._config.DEBUG_STATE:
             request = (
-                f"{'='*10}"
+                f"{' Output ':=^20}"
                 f"\nTime: {datetime.now()}"
                 f"\nUser_id: {return_message.user_messenger_id}"
                 f"\nMessage: {return_message}"
-                f"\n{'='*10}"
+                f"\n{'='*20}"
             )
             print(request)
 

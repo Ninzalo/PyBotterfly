@@ -88,7 +88,7 @@ class VkClient:
         return File(
             name=message_file.doc.title.split(".")[0],
             tag="document",
-            ext=f".{message_file.doc.ext}",
+            ext=f".{message_file.doc.ext}".lower(),
             file_bytes=file_to_string(file_bytes),
         )
 
@@ -96,7 +96,7 @@ class VkClient:
         file_url = message_file.photo.sizes[-5].url
         photo_ext = str(
             re.search(pattern=r"\.(jpg|jpeg|png)", string=file_url).group(0)
-        )
+        ).lower()
         if photo_ext not in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
             return
         file_bytes = await download_file(file_url)
