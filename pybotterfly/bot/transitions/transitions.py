@@ -2,10 +2,12 @@ import inspect
 from emoji import replace_emoji
 from dataclasses import dataclass, field, is_dataclass
 from typing import Coroutine, List
+
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.transitions.payloads import Payloads
+from pybotterfly.bot.logger import BaseLogger, Log, DefaultLogger
 
 
 @dataclass(init=False)
@@ -67,22 +69,41 @@ class Transitions:
     """
     FSM (finite state machine). Add transitions and compile before using
 
-    param transitions: Added transitions
-    param error_return: Coroutine with 'user_messenger_id'
-    and 'user_messenger' args
-    param payloads: Should be Payloads class
+    :param transitions: Added transitions
+    :type transitions: List[Transition]
+
+    :param error_return: Coroutine with 'user_messenger_id'
+        and 'user_messenger' args
+    :type error_return: Coroutine | None
+
+    :param payloads: Should be Payloads class
+    :type payloads: Payloads | None
+
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger | None
     """
 
-    transitions: List[Transition] = field(default_factory=list)
-    error_return: Coroutine | None = None
-    payloads: Payloads | None = None
-    config: BaseConfig = BaseConfig
-    _compiled: bool = False
-
-    def __post_init__(self):
-        if self.config.DEBUG_STATE:
-            if self.payloads is None:
-                print(f"Payloads aren't added")
+    def __init__(
+        self,
+        transitions: List[Transition] | None = None,
+        error_return: Coroutine | None = None,
+        payloads: Payloads | None = None,
+        config: BaseConfig = BaseConfig,
+        logger: BaseLogger | None = None,
+    ) -> None:
+        self.transitions = transitions if transitions != None else []
+        self.error_return = error_return
+        self.payloads = payloads
+        self.config = config
+        self._logger = (
+            logger if logger != None else DefaultLogger(config=config)
+        )
+        self._compiled = False
+        if self.payloads == None:
+            self._logger.log(
+                log=Log(level="INFO", text=(f"Payloads aren't added"))
+            )
 
     def add_transition(
         self,
@@ -153,8 +174,9 @@ class Transitions:
             self.transitions.append(new_transition)
         else:
             self.transitions.append(new_transition)
-        if self.config.DEBUG_STATE:
-            print(f"Added transition: {new_transition}")
+        self._logger.log(
+            log=Log(level="INFO", text=(f"Added transition: {new_transition}"))
+        )
 
     def add_error_return(self, error_func: Coroutine) -> None:
         """
@@ -167,8 +189,12 @@ class Transitions:
         :returns: None
         """
         self.error_return = error_func
-        if self.config.DEBUG_STATE:
-            print(f"Added error transition return: {error_func}")
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(f"Added error transition return: {error_func}"),
+            )
+        )
 
     def compile(self) -> None:
         """
@@ -184,14 +210,19 @@ class Transitions:
         self._checks()
         self.transitions.sort(key=lambda src: src.from_stage)
         self._compiled = True
-        if self.config.DEBUG_STATE:
-            print(f"\n[SUCCESS] Transitions compiled successfully\n")
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(f"[SUCCESS] Transitions compiled successfully\n"),
+                starts_with=f"\n",
+            )
+        )
 
     async def run(
         self,
         message: MessageStruct,
         user_messenger_id: int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
         user_stage: str,
         user_access_level: str | None,
         user_stage_changer: Coroutine | None,
@@ -269,7 +300,7 @@ class Transitions:
         self,
         message: MessageStruct,
         user_messenger_id: int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
         user_stage: str,
         user_access_level: str,
         user_stage_changer: Coroutine,
@@ -343,7 +374,7 @@ class Transitions:
         self,
         message: MessageStruct,
         user_messenger_id: int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
         user_stage: str,
         user_access_level: str,
         user_stage_changer: Coroutine,
@@ -380,7 +411,7 @@ class Transitions:
         to_access_level: str | None,
         user_access_level_changer: Coroutine | None,
         user_messenger_id: str | int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
     ) -> None:
         if to_access_level != None and user_access_level_changer != None:
             await user_access_level_changer(
@@ -394,7 +425,7 @@ class Transitions:
         to_stage_id: str | None,
         user_stage_changer: Coroutine | None,
         user_messenger_id: str | int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
     ) -> None:
         if to_stage_id != None and user_stage_changer != None:
             await user_stage_changer(
@@ -408,7 +439,7 @@ class Transitions:
         message: MessageStruct,
         transition: Transition,
         user_messenger_id: int,
-        user_messenger: config.ADDED_MESSENGERS,
+        user_messenger: str,
         user_file_saver: Coroutine | None,
     ) -> None:
         if (

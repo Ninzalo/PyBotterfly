@@ -1,13 +1,15 @@
-from configs.config import BASE_CONFIG
 from pybotterfly.bot.transitions.transitions import Transitions, FileTrigger
+
+from configs.config import BASE_CONFIG
+from configs.logger import logger
 from configs.transitions.payloads_config import payloads
 from lib import pages
 from lib.stages import General
 
 transitions = Transitions(
-    payloads=payloads,  # :Payloads. Payload transitions of Payloads class
-    # [Optional]
+    payloads=payloads,  # :Payloads. [Optional] Payload transitions of Payloads class
     config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )
 
 # adding the 'error_return'. When user's input is not added to 'transitions'
@@ -60,7 +62,8 @@ transitions.add_transition(
     from_stage=General.fourth,
     to_stage=pages.third_before_page,
     to_stage_id=General.third,
-    access_level="user",
+    access_level=["user", "admin"],
+    to_access_level="user",
 )
 
 # when the user is on the fifth page

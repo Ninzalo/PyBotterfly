@@ -1,11 +1,14 @@
 from pybotterfly.bot.transitions.payloads import Payloads
+
 from configs.config import BASE_CONFIG
+from configs.logger import logger
 from lib import pages
 from lib.stages import General
 
 
 payloads = Payloads(
-    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )
 
 # adding the error payload. When user's input is not added to 'payloads'

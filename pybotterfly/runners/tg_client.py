@@ -1,10 +1,11 @@
 import asyncio
-from datetime import datetime
 from io import BytesIO
+from datetime import datetime
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.struct import File, MessageStruct
 from pybotterfly.bot.converters import str_to_dict, file_to_string
 from pybotterfly.server.server_func import send_to_server
+from pybotterfly.bot.logger import Log, DefaultLogger, BaseLogger
 
 # Tg async library
 from aiogram import types, executor, Dispatcher
@@ -17,11 +18,15 @@ class TgClient:
         local_ip: str,
         local_port: int,
         base_config: BaseConfig,
+        logger: BaseLogger | None,
     ) -> None:
         self._dp = dispatcher
         self._local_ip = local_ip
         self._local_port = local_port
         self._config = base_config
+        self._logger = (
+            logger if logger != None else DefaultLogger(config=base_config)
+        )
         self._dp.callback_query_handler()(self.callback_message_handler)
         self._dp.message_handler(content_types=types.ContentTypes.DOCUMENT)(
             self.file_handler
@@ -98,26 +103,48 @@ class TgClient:
         self._started = True
         test_start_time = datetime.now()
         if not self._config.DEBUG_STATE:
-            print(f"Failed to run test (running not in Debug mode)")
-            return
-        print(f"Rate test started at {test_start_time}")
+            error_str = "Failed to run test (running not in Debug mode)"
+            raise RuntimeError(error_str)
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=f"Rate test started at {test_start_time}",
+            )
+        )
         for num in range(1, messages_amount + 1):
             message_struct = MessageStruct(
                 user_id=test_id, messenger="tg", text=f"TEST_MESSAGE_n{num}"
             )
             await self.server_sender(message_struct=message_struct)
-        print(
-            f"Rate test to {test_id} with {messages_amount} messages finished "
-            f"in {(datetime.now() - test_start_time).total_seconds()} seconds"
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(
+                    f"Rate test to {test_id} with {messages_amount} messages "
+                    f"finished in "
+                    f"{(datetime.now() - test_start_time).total_seconds()} "
+                    f"seconds"
+                ),
+            )
         )
 
     def start_tg_client(self) -> None:
         if self._started:
-            print(f"[ERROR] Ensure not to run test")
+            self._logger.log(
+                log=Log(
+                    level="ERROR",
+                    text="Ensure not to run test",
+                )
+            )
             return
-        print(
-            f"TG listening started"
-            f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(
+                    f"TG listening started"
+                    f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+                ),
+            )
         )
         executor.start_polling(self._dp, skip_updates=True)
 
@@ -134,6 +161,7 @@ def start_tg_client(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig = BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> None:
     """
     Starts a Telegram client that listens for incoming messages and forwards
@@ -144,14 +172,22 @@ def start_tg_client(
     :param dispatcher: The `Dispatcher` instance that will handle incoming
         messages.
     :type dispatcher: Dispatcher
+
     :param handler_ip: The IP address to use to connect to the Telegram server.
     :type handler_ip: str
+
     :param handler_port: The port number to use to connect to the Telegram
         server.
     :type handler_port: int
+
     :param base_config: The configuration options to use for the Telegram
         client. Defaults to `BaseConfig`.
     :type base_config: BaseConfig
+
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger
+
     :return: None
     :rtype: NoneType
     """
@@ -161,6 +197,7 @@ def start_tg_client(
         handler_ip=handler_ip,
         handler_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )
     tg_client.start_tg_client()
 
@@ -172,6 +209,7 @@ def run_test(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig = BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> None:
     """
     Runs a test for the Telegram client by sending `messages_amount` messages
@@ -182,18 +220,28 @@ def run_test(
 
     :param test_id: The ID of the test to be run.
     :type test_id: int
+
     :param messages_amount: The number of messages to send to the `dispatcher`.
     :type messages_amount: int
+
     :param dispatcher: The `Dispatcher` instance to send messages to.
     :type dispatcher: Dispatcher
+
     :param handler_ip: The IP address to use to connect to the Telegram server.
     :type handler_ip: str
+
     :param handler_port: The port number to use to connect to the Telegram
         server.
     :type handler_port: int
+
     :param base_config: The configuration options to use for the Telegram
         client. Defaults to `BaseConfig`.
     :type base_config: BaseConfig
+
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger
+
     :return: None
     :rtype: NoneType
     """
@@ -208,6 +256,7 @@ def run_test(
         handler_ip=handler_ip,
         handler_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )
     tg_client.run_test(test_id=test_id, messages_amount=messages_amount)
 
@@ -217,6 +266,7 @@ def _get_tg_client(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> TgClient:
     """
     Returns a new Tg_client instance with the specified configuration options.
@@ -229,13 +279,17 @@ def _get_tg_client(
         message handler.
     :type handler_ip: str
 
-    :param handler_port: An integer that represents the port number of the bot's
-        message handler.
+    :param handler_port: An integer that represents the port number of the
+        bot's message handler.
     :type handler_port: int
 
     :param base_config: An instance of the BaseConfig class that represents the
         base configuration options for the bot.
     :type base_config: BaseConfig
+
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger
 
     :returns: A new Tg_client instance with the specified configuration options.
     :rtype: Tg_client
@@ -245,4 +299,5 @@ def _get_tg_client(
         local_ip=handler_ip,
         local_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )

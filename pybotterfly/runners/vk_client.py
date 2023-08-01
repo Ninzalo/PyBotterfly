@@ -8,6 +8,7 @@ from pybotterfly.bot.struct import File, MessageStruct
 from pybotterfly.bot.downloaders import download_file
 from pybotterfly.bot.converters import file_to_string
 from pybotterfly.server.server_func import send_to_server
+from pybotterfly.bot.logger import BaseLogger, Log, DefaultLogger
 
 # Vk async library
 from vkbottle import GroupEventType
@@ -20,12 +21,16 @@ class VkClient:
         handler: Bot,
         local_ip: str,
         local_port: int,
-        base_config: BaseConfig = BaseConfig,
+        base_config: BaseConfig,
+        logger: BaseLogger | None,
     ) -> None:
         self._bot = handler
         self._local_ip = local_ip
         self._local_port = local_port
         self._config = base_config
+        self._logger = (
+            logger if logger != None else DefaultLogger(config=base_config)
+        )
         self._testing = False
         self._bot.on.raw_event(
             GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent
@@ -117,20 +122,31 @@ class VkClient:
 
     def start_vk_bot(self):
         if self._testing:
-            print(f"[ERROR] Ensure not to run test")
-            return
-        print(
-            f"VK listening started"
-            f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+            self._logger.log(
+                log=Log(level="ERROR", text="Ensure not to run test")
+            )
+            raise RuntimeError
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(
+                    f"VK listening started"
+                    f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+                ),
+            )
         )
         self._bot.run_forever()
 
     async def test_messages(self, test_id: int, messages_amount: int):
         test_start_time = datetime.now()
         if not self._config.DEBUG_STATE:
-            print(f"Failed to run test (running not in Debug mode)")
-            return
-        print(f"Rate test started at {test_start_time}")
+            error_str = "Failed to run test (running not in Debug mode)"
+            raise RuntimeError(error_str)
+        self._logger.log(
+            log=Log(
+                level="INFO", text=f"Rate test started at {test_start_time}"
+            )
+        )
         for num in range(1, messages_amount + 1):
             message_struct = MessageStruct(
                 user_id=test_id, messenger="vk", text=f"TEST_MESSAGE_n{num}"
@@ -140,9 +156,16 @@ class VkClient:
                 local_ip=self._local_ip,
                 local_port=self._local_port,
             )
-        print(
-            f"Rate test to {test_id} with {messages_amount} messages finished "
-            f"in {(datetime.now() - test_start_time).total_seconds()} seconds"
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(
+                    f"Rate test to {test_id} with {messages_amount} messages "
+                    f"finished in "
+                    f"{(datetime.now() - test_start_time).total_seconds()} "
+                    f"seconds"
+                ),
+            )
         )
 
     def run_test(self, test_id: int, messages_amount: int) -> None:
@@ -159,6 +182,7 @@ def start_vk_client(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig = BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> None:
     """
     Initialize and start a VK client bot.
@@ -177,6 +201,10 @@ def start_vk_client(
     :param base_config: BaseConfig object containing VK API settings
     :type base_config: BaseConfig, optional
 
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger
+
     :return: None
     :rtype: NoneType
     """
@@ -186,6 +214,7 @@ def start_vk_client(
         handler_ip=handler_ip,
         handler_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )
     vk_client.start_vk_bot()
 
@@ -197,6 +226,7 @@ def run_test(
     handler_ip: str,
     handler_port: int,
     base_config: BaseConfig = BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> None:
     """
     Runs a load test on the specified `handler` using the specified
@@ -223,6 +253,10 @@ def run_test(
         defaults to `BaseConfig`.
     :type base_config: BaseConfig, optional
 
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger
+
     :return: None
     :rtype: NoneType
     """
@@ -237,6 +271,7 @@ def run_test(
         handler_ip=handler_ip,
         handler_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )
     vk_client.run_test(test_id=test_id, messages_amount=messages_amount)
 
@@ -245,11 +280,13 @@ def _get_vk_client(
     handler: Bot,
     handler_ip: str,
     handler_port: int,
-    base_config: BaseConfig = BaseConfig,
+    base_config: BaseConfig,
+    logger: BaseLogger | None = None,
 ):
     return VkClient(
         handler=handler,
         local_ip=handler_ip,
         local_port=handler_port,
         base_config=base_config,
+        logger=logger,
     )

@@ -3,12 +3,15 @@ from pybotterfly.bot.reply.default_reply_types import (
     DefaultVkReplier,
     DefaultTgReplier,
 )
+
 from configs.messengers_configs.tg_config import bot
 from configs.messengers_configs.vk_config import api
 from configs.config import BASE_CONFIG
+from configs.logger import logger
 
 messengers = MessengersDivision(
-    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )
 messengers.register_messenger(
     trigger="tg",  # :str. The variable by which the separation occurs

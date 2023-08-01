@@ -8,6 +8,7 @@ from pybotterfly.bot.converters import (
 from pybotterfly.bot.returns.message import Return
 from pybotterfly.bot.reply.reply_division import MessengersDivision
 from pybotterfly.message_handler.message_handler import MessageHandler
+from pybotterfly.bot.logger import Log, DefaultLogger, BaseLogger
 
 
 class Server:
@@ -16,10 +17,12 @@ class Server:
         messengers: MessengersDivision,
         message_handler: MessageHandler,
         base_config: BaseConfig,
+        logger: BaseLogger,
     ) -> None:
         self._messengers = messengers
         self._message_handler = message_handler
         self._config = base_config
+        self._logger = logger
         self._check_errors()
 
     def _check_errors(self) -> None:
@@ -43,8 +46,9 @@ class Server:
                 break
             byte_array.extend(data)
         if byte_array == bytearray():
-            if self._config.DEBUG_STATE:
-                print("Received empty byte array")
+            self._logger.log(
+                log=Log(level="ERROR", text=(f"Received empty byte array"))
+            )
             return
         message_cls = bytes_to_dataclass(byte_array)
         if message_cls.files != []:
@@ -54,18 +58,34 @@ class Server:
                 )
         addr = writer.get_extra_info("peername")
         receive_time = datetime.now()
-        print(f"[{receive_time}] Received {message_cls!r} from {addr!r}")
-        if self._config.DEBUG_STATE:
-            print(f"[{receive_time}] Fetching {message_cls} started")
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                time=receive_time,
+                text=(f"Received {message_cls!r} from {addr!r}"),
+            )
+        )
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                time=receive_time,
+                text=(f"Fetching {message_cls} started"),
+            )
+        )
         return_cls = await self._message_handler.get(message_class=message_cls)
-        if self._config.DEBUG_STATE:
-            print(f"[{datetime.now()}] Fetching {message_cls} finished")
+        self._logger.log(
+            log=Log(level="INFO", text=(f"Fetching {message_cls} finished"))
+        )
         if not return_cls:
-            if self._config.DEBUG_STATE:
-                print(
-                    f"An incorrect request resulted in an error. "
-                    f"Request skipped. Return_cls: {return_cls}"
+            self._logger.log(
+                log=Log(
+                    level="ERROR",
+                    text=(
+                        f"An incorrect request resulted in an error. "
+                        f"Request skipped. Return_cls: {return_cls}"
+                    ),
                 )
+            )
             return
         for return_message in return_cls.returns:
             task = asyncio.create_task(
@@ -78,14 +98,17 @@ class Server:
     async def replier(self, return_message: Return):
         await self._messengers.get_func(return_message=return_message)
         if self._config.DEBUG_STATE:
-            request = (
-                f"{' Output ':=^20}"
-                f"\nTime: {datetime.now()}"
-                f"\nUser_id: {return_message.user_messenger_id}"
-                f"\nMessage: {return_message}"
-                f"\n{'='*20}"
+            self._logger.log(
+                log=Log(
+                    level="INFO",
+                    text=(
+                        f"Result message\n{' Output ':=^20}"
+                        f"\nUser_id: {return_message.user_messenger_id}"
+                        f"\nMessage: {return_message}"
+                        f"\n{'='*20}"
+                    ),
+                )
             )
-            print(request)
 
     async def main(self, local_ip: str, local_port: int) -> None:
         for messenger in self._messengers._messengers_to_answer:
@@ -98,9 +121,14 @@ class Server:
             local_port,
         )
         addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)
-        print(
-            f"Serving on {addrs}"
-            f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(
+                    f"Serving on {addrs}"
+                    f"{' in Debug mode' if self._config.DEBUG_STATE else ''}"
+                ),
+            )
         )
         async with server:
             await server.serve_forever()
@@ -115,6 +143,7 @@ def run_server(
     local_ip: str,
     local_port: int,
     base_config: BaseConfig = BaseConfig,
+    logger: BaseLogger | None = None,
 ) -> None:
     """
     Starts the server and begins listening for incoming messages.
@@ -140,12 +169,19 @@ def run_server(
         the BaseConfig class with its default values.
     :type base_config: BaseConfig, optional
 
+    :param logger: An instance of the BaseLogger class that represents the
+        base logger for the bot.
+    :type logger: BaseLogger, optional
+
     :returns: None
     :rtype: NoneType
     """
+    if logger == None:
+        logger = DefaultLogger(config=base_config)
     server = Server(
         messengers=messengers,
         message_handler=message_handler,
         base_config=base_config,
+        logger=logger,
     )
     server.start_server(local_ip=local_ip, local_port=local_port)

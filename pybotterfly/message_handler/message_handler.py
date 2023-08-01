@@ -1,9 +1,11 @@
 from typing import Coroutine
+
 from pybotterfly.base_config import BaseConfig
 from pybotterfly.bot.returns.message import Returns
 from pybotterfly.bot.struct import MessageStruct
 from pybotterfly.bot.transitions.transitions import Transitions
 from pybotterfly.message_handler.struct import Func
+from pybotterfly.bot.logger import BaseLogger, Log, DefaultLogger
 
 
 class MessageHandler:
@@ -13,6 +15,7 @@ class MessageHandler:
         user_stage: Func,
         user_access_level: Func | None = None,
         user_file_saver: Coroutine | None = None,
+        logger: BaseLogger | None = None,
         base_config: BaseConfig = BaseConfig,
     ) -> None:
         """
@@ -32,7 +35,7 @@ class MessageHandler:
             - .getter - a coroutine to get user’s access level. Should contain
                 ‘user_messenger_id’ and ‘user_messenger’ args.
             - .setter - a coroutine to change user’s access level. Should
-                contain 'tu_access_level', ‘user_messenger_id’ and
+                contain 'to_access_level', ‘user_messenger_id’ and
                 ‘user_messenger’ args.
         :type user_access_level: Func | None
 
@@ -45,6 +48,10 @@ class MessageHandler:
         :param base_config: An instance of the BaseConfig class.
         :type base_config: BaseConfig
 
+        :param logger: An instance of the BaseLogger class that represents
+            the base logger for the bot.
+        :type logger: BaseLogger | None
+
         :returns: None
         :rtype: NoneType
         """
@@ -54,15 +61,32 @@ class MessageHandler:
         self._user_file_saver = user_file_saver
         self._base_config = base_config
         self._config = base_config
-        if self._config.DEBUG_STATE:
-            print(f"Added user stage getter: {user_stage.getter}")
-            if self._user_access_level:
-                print(
-                    f"Added user access level getter: "
-                    f"{user_access_level.getter}"
+        self._logger = (
+            logger if logger != None else DefaultLogger(config=base_config)
+        )
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(f"Added user stage getter: {user_stage.getter}"),
+            )
+        )
+        if self._user_access_level:
+            self._logger.log(
+                log=Log(
+                    level="INFO",
+                    text=(
+                        f"Added user access level getter: "
+                        f"{user_access_level.getter}"
+                    ),
                 )
-            if self._user_file_saver:
-                print(f"Added user file saver: {user_file_saver}")
+            )
+        if self._user_file_saver:
+            self._logger.log(
+                log=Log(
+                    level="INFO",
+                    text=(f"Added user file saver: {user_file_saver}"),
+                )
+            )
         self._checks()
 
     async def get(self, message_class: MessageStruct) -> Returns:
@@ -141,5 +165,10 @@ class MessageHandler:
                 arg=["file_name", "file_extension", "file_tag", "file_bytes"],
                 func=self._user_file_saver,
             )
-        if self._config.DEBUG_STATE:
-            print(f"\n[SUCCESS] Message handler's checks passed\n")
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(f"[SUCCESS] Message handler's checks passed\n"),
+                starts_with=f"\n",
+            )
+        )

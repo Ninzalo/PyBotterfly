@@ -2,7 +2,9 @@ import inspect
 from dataclasses import dataclass, field
 from collections import Counter
 from typing import Coroutine, List, Tuple, Union, Dict, Any
+
 from pybotterfly.base_config import BaseConfig
+from pybotterfly.bot.logger import BaseLogger, Log, DefaultLogger
 
 
 @dataclass()
@@ -180,10 +182,17 @@ class Rules:
 
 
 class Payloads(Rules):
-    def __init__(self, config: BaseConfig = BaseConfig) -> None:
+    def __init__(
+        self,
+        config: BaseConfig = BaseConfig,
+        logger: BaseLogger | None = None,
+    ) -> None:
         self.config = config
         self.main_key: ShortenedItem = ShortenedItem(item="type")
         self.classes: List[Classification] = []
+        self._logger = (
+            logger if logger != None else DefaultLogger(config=config)
+        )
         self._error_payload: Payload | None = None
         self._short_main_values: List[str] = []
         self._main_key_changed: int = 0
@@ -270,8 +279,11 @@ class Payloads(Rules):
                 and list_of_triggers == existing_payload.triggers
                 and list_of_data_items == existing_payload.data
             ):
-                if self.config.DEBUG_STATE:
-                    print(f"Removed payload: '{payload}'")
+                self._logger.log(
+                    log=Log(
+                        level="INFO", text=(f"Removed payload: '{payload}'")
+                    )
+                )
                 classification.payloads.pop(num)
                 return
         error_str = f"Payload '{payload}' not found"
@@ -369,12 +381,16 @@ class Payloads(Rules):
                 f"\nError from: '{payload}'"
             )
             raise ValueError(error_str)
-        if self.config.DEBUG_STATE and self._rules_applied:
-            info_str = (
-                f"Added payload: "
-                f"{self._convert_payload_to_dict(entry_payload=new_payload)}"
+        if self._rules_applied:
+            self._logger.log(
+                log=Log(
+                    level="INFO",
+                    text=(
+                        f"Added payload: "
+                        f"{self._convert_payload_to_dict(entry_payload=new_payload)}"
+                    ),
+                )
             )
-            print(info_str)
         return new_payload
 
     def shortener(self, payload_dict: dict) -> dict:
@@ -439,8 +455,9 @@ class Payloads(Rules):
             payload=payload, from_stage="any", to_stage=to_stage
         )
         self._error_payload = error_payload
-        if self.config.DEBUG_STATE:
-            print(f"Added error payload: '{payload}'")
+        self._logger.log(
+            log=Log(level="INFO", text=(f"Added error payload: '{payload}'"))
+        )
 
     def compile(self) -> None:
         """
@@ -468,8 +485,13 @@ class Payloads(Rules):
         if self._compiled:
             raise RuntimeError("Payloads have already been compiled")
         self._compiled = True
-        if self.config.DEBUG_STATE:
-            print(f"\n[SUCCESS] Payloads compiled successfully\n")
+        self._logger.log(
+            log=Log(
+                level="INFO",
+                text=(f"[SUCCESS] Payloads compiled successfully\n"),
+                starts_with=f"\n",
+            )
+        )
 
     def get_all_source_stages(self) -> List[str]:
         """
@@ -723,8 +745,9 @@ class Payloads(Rules):
         return self._error_payload
 
     def _return_error_payload_dict(self) -> dict:
-        if self.config.DEBUG_STATE:
-            print(f"Input resulted as an error")
+        self._logger.log(
+            log=Log(level="WARNING", text=(f"Input resulted as an error"))
+        )
         return self.shortener(
             self._convert_payload_to_dict(entry_payload=self._error_payload)
         )
@@ -887,8 +910,12 @@ class Payloads(Rules):
         for num, classification in enumerate(self.classes):
             if classification.payloads == []:
                 self.classes.pop(num)
-                if self.config.DEBUG_STATE:
-                    print(
-                        f"Classification '{classification.main_value.item}' "
-                        "was removed due to empty Payloads list"
+                self._logger.log(
+                    log=Log(
+                        level="INFO",
+                        text=(
+                            f"Classification '{classification.main_value.item}' "
+                            "was removed due to empty Payloads list"
+                        ),
                     )
+                )
