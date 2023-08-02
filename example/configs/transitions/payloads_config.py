@@ -20,12 +20,12 @@ payloads.add_error_payload(
 # when the user is on the second page
 payloads.add_payload(
     payload="type:data/action:go_to_third_page/data:/id:",  # :str. Trigger to run an FSM based on existing references
-    from_stage=General.second,  # :str. ‘Path’ will run FSM only if user is on this stage
+    from_stage=General.second,  # :str. Incoming payload will run FSM only if user is on this stage
     to_stage=pages.third_before_page,  # :Coroutine. The destination of this payload transition
     # [Optional]
     to_stage_id=General.third,  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
-    # access_level="user",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
-    # to_access_level="admin",  # :str. [Optional] specify access level of the page. Defaults to None
+    # access_level="user",  # :str|List[str]. [Optional] specify required access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    # to_access_level="admin",  # :str. [Optional] specify new user's access level after transition. Defaults to None
 )
 # adding fake payload for removing it later
 payloads.add_payload(
@@ -42,7 +42,7 @@ payloads.add_payload(
     to_stage=pages.third_after_page,
 )
 
-# automatically shortens all payloads
+# applying rules for shortening. automatically shortens all payloads
 # all of the added payloads below will be automatically shortened with the existing shortening rules
 payloads.apply_rules()
 

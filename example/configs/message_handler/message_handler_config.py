@@ -23,6 +23,7 @@ message_handler = MessageHandler(
         getter=get_user_access_level,  # :Coroutine. [Optional] A coroutine to get user’s access level. Should contain ‘user_messenger_id’ and ‘user_messenger’ args.
         setter=change_user_access_level,  # :Coroutine. [Optional] A coroutine to change user’s access level. Should contain 'to_access_level', ‘user_messenger_id’ and ‘user_messenger’ args.
     ),
+    # user_file_saver=user_file_saver_coro,  # : Coroutine. [Optional] A coroutine that saves user’s file to the database. Should contain 'file_name', 'file_extension', 'file_tag', 'file_bytes', 'user_messenger_id' and 'user_messenger' args.
     base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
     logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )

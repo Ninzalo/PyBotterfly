@@ -25,8 +25,8 @@ transitions.add_transition(
     to_stage=pages.first_page,  # :Coroutine. The destination of this transition
     # [Optional]
     to_stage_id=General.first,  # :str. [Optional] specify a stage ID to go to. Changes user's stage ID in database
-    # access_level="user",  # :str|List[str]. [Optional] specify access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
-    # to_access_level="admin",  # :str. [Optional] specify access level of the page. Defaults to None
+    # access_level="user",  # :str|List[str]. [Optional] specify required access level of the page. Users with another access level will not be able to access the page. Defaults to ["any"]
+    # to_access_level="admin",  # :str. [Optional] specify new user's access level after transition. Defaults to None
 )
 transitions.add_transition(
     trigger="Начать",

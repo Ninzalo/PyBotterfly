@@ -8,6 +8,7 @@ start_vk_client(
     handler=bot,  # :Bot. Your preconfigured VK Bot
     handler_ip=LOCAL_IP,  # :str. Your local ip
     handler_port=LOCAL_PORT,  # :int. Your local port
+    # [Optional]
     base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
     logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes.
 )
@@ -18,6 +19,7 @@ start_vk_client(
 #     handler=bot,  # :Bot. Your preconfigured VK Bot
 #     handler_ip=LOCAL_IP,  # :str. Your local ip
 #     handler_port=LOCAL_PORT,  # :int. Your local port
+#     # [Optional]
 #     base_config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
 #     logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes.
 # )

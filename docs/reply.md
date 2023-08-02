@@ -8,7 +8,8 @@ An instance of Buttons class to create keyboard
 from pybotterfly.bot.returns.buttons import Buttons
 
 keyboard = Buttons(
-    config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    config=BASE_CONFIG,  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )
 ```
 
@@ -19,6 +20,7 @@ from pybotterfly.bot.returns.buttons import InlineButtons
 
 keyboard = InlineButtons(
     config=BASE_CONFIG  # :BaseConfig. [Optional] specify your base config of BaseConfig class if there are any changes. Defaults to BaseConfig
+    logger=logger,  # :BaseLogger. [Optional] specify your logger of BaseLogger class if there are any changes
 )
 ```
 
@@ -70,9 +72,9 @@ example/lib/keyboards.py
 Every page coroutine should include `user_messenger_id`, `user_messenger`, `message` arguments
 ```python
 async def page(
-    user_messenger_id: int,  # :int. User id to send the message
-    user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs
-    message: str | dict,  # :str|dict. Received message | payload from user
+    user_messenger_id: int,  # :int. User id to send the message. 'user_messenger_id' is always required
+    user_messenger: str,  # :str. Represents one of the added messengers to which the user belongs. 'user_messenger' is always required
+    message: str | dict,  # :str|dict. Received message | payload from user. 'message' is always required
 ) -> Returns:
     ...
 ```
@@ -82,20 +84,26 @@ An instance of Returns class to create pages
 ```python
 from pybotterfly.bot.returns.message import Returns
 
-return_cls = Returns()
+    ...
+    return_cls = Returns()
+    ...
 ```
 
 #### Adding return
 The answer on the user's input
 ```python
-await return_cls.add_return(
-    user_messenger_id=user_messenger_id,  # :int. User id to send the message
-    user_messenger=user_messenger,  # :str. Represents one of the added messengers to which the user belongs
-    text=text,  #:str. Text of the message (page)
-    # [Optional]
-    keyboard=keyboard,  # :Buttons. [Optional] An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
-    # inline_keyboard=keyboard,  # :InlineButtons. [Optional] An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
-)
+from pybotterfly.bot.returns.message import file_validator
+
+    ...
+    await return_cls.add_return(
+        user_messenger_id=user_messenger_id,  # :int. User id to send the message
+        user_messenger=user_messenger,  # :str. Represents one of the added messengers to which the user belongs
+        text=text,  #:str. Text of the message (page)
+        # [Optional]
+        keyboard=keyboard,  # :Buttons. [Optional] An instance of preconfigured Buttons class. You are not able to add this argument if your keyboard is the instance of InlineButtons class
+        # inline_keyboard=keyboard,  # :InlineButtons. [Optional] An instance of preconfigured InlineButtons class. You are not able to add this argument if your keyboard is the instance of Buttons class
+        attachments=file_validator(message=message),  # :List[File]. [Optional] List of files to send with the message
+    )
 ```
 Note: You can add multiple returns at once
 
