@@ -18,4 +18,4 @@ pip install git+https://github.com/Ninzalo/PyBotterfly.git
 
 ## Reply creation documentation
 
-- [Docs](https://github.com/Ninzalo/PyBotterfly/blob/master/docs/reply.md)
+- [Reply creation](https://github.com/Ninzalo/PyBotterfly/blob/master/docs/reply.md)
