@@ -12,6 +12,8 @@ pybotterfly.egg-info/requires.txt
 pybotterfly.egg-info/top_level.txt
 pybotterfly/bot/__init__.py
 pybotterfly/bot/converters.py
+pybotterfly/bot/downloaders.py
+pybotterfly/bot/logger.py
 pybotterfly/bot/struct.py
 pybotterfly/bot/throttlers.py
 pybotterfly/bot/reply/__init__.py
@@ -26,6 +28,7 @@ pybotterfly/bot/transitions/schedule.py
 pybotterfly/bot/transitions/transitions.py
 pybotterfly/message_handler/__init__.py
 pybotterfly/message_handler/message_handler.py
+pybotterfly/message_handler/struct.py
 pybotterfly/runners/__init__.py
 pybotterfly/runners/tg_client.py
 pybotterfly/runners/vk_client.py
