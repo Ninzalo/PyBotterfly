@@ -4,9 +4,16 @@ Build multi-messenger chatbots with ease using our scalable Python library, desi
 
 ## Installation 
 
+#### via GitHub
 ```shell
 pip install git+https://github.com/Ninzalo/PyBotterfly.git
 ```
+
+#### via PyPI
+```shell
+pip install pybotterfly
+```
+
 
 ## Example usage
 

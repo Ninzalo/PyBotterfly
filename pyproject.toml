@@ -1,26 +1,18 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "pybotterfly"
-version = "0.0.1"
-authors = [
-  { name="Ninzalo" },
-]
+version = "0.1.5"
 description = "Build multi-messenger chatbots with ease using our scalable Python library, designed to simplify listener integration for various platforms"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    "black==23.1.0", 
-    "emoji==2.2.0", 
-    "aiogram==2.25.1", 
-    "vkbottle==4.3.12"
-]
+authors = ["Ninzalo <k-artemiy@mail.ru>"]
+license = "MIT"
+readme = "README.md"
 
-[project.urls]
-"Homepage" = "https://github.com/Ninzalo/PyBotterfly"
+[tool.poetry.dependencies]
+python = "^3.11"
+black = "^23.7.0"
+emoji = "^2.7.0"
+aiogram = "^2.25.1"
+vkbottle = "^4.3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

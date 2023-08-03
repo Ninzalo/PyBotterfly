@@ -1,4 +1,0 @@
-black==23.1.0
-emoji==2.2.0
-aiogram==2.25.1
-vkbottle==4.3.12

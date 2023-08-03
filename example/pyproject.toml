@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "example"
+version = "0.0.1"
+description = ""
+authors = ["Ninzalo <k-artemiy@mail.ru>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^1.0.0"
+loguru = "^0.7.0"
+asyncpg = "^0.28.0"
+
+[tool.poetry.group.dev.dependencies]
+pybotterfly = {path = "../"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
