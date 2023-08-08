@@ -70,21 +70,38 @@ class TgClient:
             user_id=message.from_id, messenger="tg", text=message.text
         )
         if message.document != None:
-            doc_ext = (
-                f".{str(message.document.file_name).split('.')[-1]}".lower()
+            message_file = await self._file_downloader(
+                message_file=message.document
             )
-            if doc_ext in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
-                file_in_io = BytesIO()
-                await message.document.download(destination_file=file_in_io)
-                message_struct.files.append(
-                    File(
-                        name=f"{message.document.file_name}",
-                        tag="document",
-                        ext=doc_ext,
-                        file_bytes=file_to_string(file_in_io.getvalue()),
-                    )
-                )
+            if message_file != None:
+                message_struct.files.append(message_file)
         await self.server_sender(message_struct=message_struct)
+
+    async def _file_downloader(
+        self, message_file: types.document.Document
+    ) -> File | None:
+        doc_ext = f".{str(message_file.file_name).split('.')[-1]}".lower()
+        if doc_ext not in self._config.ALLOWED_FILE_EXTENSIONS_LIST:
+            return
+        if message_file.file_size >= 50 * 1024 * 1024:
+            self._logger.log(
+                log=Log(
+                    level="ERROR",
+                    text=(
+                        f"Skipping file with size: "
+                        f"{message_file.file_size}"
+                    ),
+                )
+            )
+            return
+        file_in_io = BytesIO()
+        await message_file.download(destination_file=file_in_io)
+        return File(
+            name=f"{message_file.file_name}",
+            tag="document",
+            ext=doc_ext,
+            file_bytes=file_to_string(file_in_io.getvalue()),
+        )
 
     async def message_handler(self, message: types.Message) -> None:
         message_struct = MessageStruct(

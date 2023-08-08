@@ -13,6 +13,7 @@ from pybotterfly.bot.logger import BaseLogger, Log, DefaultLogger
 # Vk async library
 from vkbottle import GroupEventType
 from vkbottle.bot import Message, MessageEvent, Bot
+from vkbottle_types.codegen.objects import DocsDoc
 
 
 class VkClient:
@@ -59,7 +60,7 @@ class VkClient:
         for message_file in event.attachments:
             if message_file.doc != None:
                 doc_file = await self._file_downloader(
-                    message_file=message_file
+                    message_file=message_file.doc
                 )
                 if doc_file != None:
                     files.append(doc_file)
@@ -83,17 +84,25 @@ class VkClient:
             local_port=self._local_port,
         )
 
-    async def _file_downloader(self, message_file) -> File:
+    async def _file_downloader(self, message_file: DocsDoc) -> File | None:
         if (
-            f".{message_file.doc.ext}"
+            f".{message_file.ext}"
             not in self._config.ALLOWED_FILE_EXTENSIONS_LIST
         ):
             return
-        file_bytes = await download_file(message_file.doc.url)
+        if message_file.size >= 50 * 1024 * 1024:
+            self._logger.log(
+                log=Log(
+                    level="ERROR",
+                    text=f"Skipping file with size: {message_file.size}",
+                )
+            )
+            return
+        file_bytes = await download_file(message_file.url)
         return File(
-            name=message_file.doc.title.split(".")[0],
+            name=message_file.title.split(".")[0],
             tag="document",
-            ext=f".{message_file.doc.ext}".lower(),
+            ext=f".{message_file.ext}".lower(),
             file_bytes=file_to_string(file_bytes),
         )
 
