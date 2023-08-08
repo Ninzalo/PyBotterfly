@@ -1,6 +1,6 @@
 ## Description
 
-Build multi-messenger chatbots with ease using our scalable Python library, designed to simplify listener integration for various platforms
+Build multi-messenger chatbots with ease using our scalable Python framework, designed to simplify listener integration for various platforms
 
 ## Installation 
 

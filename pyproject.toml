@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pybotterfly"
-version = "0.1.5"
-description = "Build multi-messenger chatbots with ease using our scalable Python library, designed to simplify listener integration for various platforms"
+version = "0.1.6"
+description = "framework for creating multi-messenger bots"
 authors = ["Ninzalo <k-artemiy@mail.ru>"]
 license = "MIT"
 readme = "README.md"
